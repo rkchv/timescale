@@ -1,0 +1,110 @@
+{
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.tabCompletion": "onlySnippets",
+  "workbench.colorTheme": "GitHub Dark",
+  "workbench.iconTheme": "material-icon-theme",
+  "window.title": "👀${rootPath}",
+
+  /**
+  * Languages
+  **/
+
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  // "[html]": {
+  //   "editor.defaultFormatter": "HookyQR.beautify"
+  // },
+
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.suggestSelection": "recentlyUsed",
+    "editor.suggest.showKeywords": false,
+  },
+
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+
+  "[scss]": {
+    "editor.defaultFormatter": "HookyQR.beautify"
+  },
+
+  "search.exclude": {
+    "**/node_modules": true,
+  },
+
+  /**
+  * Typography
+  **/
+
+  "editor.fontFamily": "'Operator Mono', 'JetBrains Mono', 'FiraCode-Retina', 'FiraCode-Retina', 'Menlo', 'Dank Mono', 'Monaco', 'Courier New', monospace",
+  "editor.fontLigatures": true,
+  "editor.fontWeight": 400,
+  "editor.fontSize": 16,
+  "editor.lineHeight": 38,
+  "editor.suggestFontSize": 15,
+  "editor.suggestLineHeight": 28,
+  "terminal.integrated.fontSize": 15,
+  "terminal.integrated.lineHeight": 1.5,
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": [
+          "comment",
+          "entity.other.attribute-name",
+          // "string.quoted.double",
+          // "string.quoted.single",
+          // "keyword.control"
+          // "variable.parameter"
+        ],
+        "settings": {
+          "fontStyle": "italic"
+        }
+      },
+    ]
+  },
+
+  /**
+  * ESLint
+  **/
+
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+  ],
+
+  /**
+  * Hide
+  **/
+
+  "workbench.activityBar.visible": false,
+  "workbench.statusBar.visible": false,
+  "workbench.sideBar.location": "right",
+  "workbench.editor.showTabs": false,
+  "editor.minimap.enabled": false,
+  "scm.diffDecorations": "none",
+  "editor.matchBrackets": "never",
+  "workbench.tips.enabled": false,
+  "editor.colorDecorators": false,
+  "git.decorations.enabled": false,
+  "workbench.startupEditor": "none",
+  "editor.lightbulb.enabled": false,
+  "editor.selectionHighlight": false,
+  "editor.overviewRulerBorder": false,
+  "editor.renderLineHighlight": "none",
+  "editor.occurrencesHighlight": false,
+  "problems.decorations.enabled": false,
+  "editor.renderControlCharacters": false,
+  "editor.hideCursorInOverviewRuler": true,
+  "editor.gotoLocation.multipleReferences": "goto",
+  "editor.gotoLocation.multipleDefinitions": "goto",
+  "editor.gotoLocation.multipleDeclarations": "goto",
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "editor.gotoLocation.multipleImplementations": "goto",
+  "editor.gotoLocation.multipleTypeDefinitions": "goto",
+}
