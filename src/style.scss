@@ -25,8 +25,8 @@ body {
   &-ticks {
     background-color: #ececec;
     position: absolute;
-    left: 5px;
-    right: 5px;
+    left: 0;
+    right: 0;
     top: 40px;
     bottom: 0;
     z-index: 2;
@@ -47,14 +47,19 @@ body {
     &.big {
       height: 100%;
       background-color: red;
+
+      &.shift {
+        transform: translateX(-1px);
+      }
+
     }
 
   }
 
   &-times {
     position: absolute;
-    left: 5px;
-    right: 5px;
+    left: 0;
+    right: 0;
     top: 0;
     bottom: 0;
     z-index: 2;
@@ -78,12 +83,17 @@ body {
     &:last-child {
       transform: translateX(-100%);
     }
+
+    &.hidden {
+      display: none;
+    }
+
   }
 
   &-cells {
     position: absolute;
-    left: 5px;
-    right: 5px;
+    left: 0;
+    right: 0;
     z-index: 3;
     height: 50px;
     top: 40px;

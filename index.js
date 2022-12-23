@@ -2,7 +2,14 @@
  * @format
  */
 
+import Plyr from 'plyr';
+import 'plyr/dist/plyr.css';
 import Timescale from './src/';
+
+(function () {
+  let element = document.getElementById('player');
+  new Plyr(element);
+})();
 
 (function () {
   // UTC время
@@ -47,6 +54,13 @@ import Timescale from './src/';
       start: 1670857200, // Mon Dec 12 2022 15:00:00 GMT+0000,
       stop: 1670860800, // Mon Dec 12 2022 16:00:00 GMT+0000,
       type: 'network-attack',
+      url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671553504/coverr-workers-typing-and-closing-their-laptops-4953-1080p_r9ttkj.mp4',
+    },
+    {
+      id: '1hsyso85a1',
+      start: 1670884645,
+      stop: 1670891845,
+      type: 'registry-attack',
       url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671553504/coverr-workers-typing-and-closing-their-laptops-4953-1080p_r9ttkj.mp4',
     },
   ];

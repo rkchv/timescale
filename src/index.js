@@ -6,11 +6,11 @@ import './style.scss';
 
 export default class Timescale {
   colors = {
-    'file-attack': '#E9847D',
-    'process-attack': '#5BAEEF',
-    'registry-attack': '#B17BB9',
-    'network-attack': '#8EC519',
-    'suspicious-activity': '#4BC580',
+    'file-attack': '#e9847d',
+    'process-attack': '#5baeef',
+    'registry-attack': '#b17bb9',
+    'network-attack': '#8ec519',
+    'suspicious-activity': '#4bc580',
   };
 
   constructor({
@@ -19,24 +19,34 @@ export default class Timescale {
     hours = 24,
     hoursStep = 2,
     tickPerHour = 4,
-    min = 1,
-    max = 48,
   }) {
     this.$element = element;
-    this.hours = hours;
+    this.cellOverflow = false;
+    this.timeCells = timeCells;
+    this.scaleHours = !this.cellOverflowChecking() ? hours : hours * 2;
+    this.scaleRatio = !this.cellOverflowChecking() ? 1 : 2;
     this.tickPerHour = tickPerHour;
     this.hoursStep = hoursStep;
-    this.ticksCount = this.hours * this.tickPerHour;
-    this.timesCount = this.hours / this.hoursStep;
-    this.timeCells = timeCells;
+    this.ticksCount = this.scaleHours * this.tickPerHour;
+    this.timesCount = this.scaleHours / this.hoursStep;
     this.init();
   }
 
   init() {
     this.initScale();
+    this.initTimeCells();
     this.initTicks();
     this.initTimeLabels();
-    this.initTimeCells();
+  }
+
+  cellOverflowChecking() {
+    let overflow = false;
+    this.timeCells.forEach(({ start, stop }) => {
+      if (!overflow) {
+        overflow = this.calcTimeCellOverflow(start, stop);
+      }
+    });
+    return overflow;
   }
 
   /*
@@ -53,7 +63,10 @@ export default class Timescale {
   get scaleTemplate() {
     return `
       <div class="timescale">
-        <div class="timescale-scale"></div>
+        <div
+          class="timescale-scale"
+          style="width: ${this.scaleRatio * 100}%">
+        </div>
       </div>
     `;
   }
@@ -76,11 +89,10 @@ export default class Timescale {
     let iterator = [...Array(this.ticksCount + 1)];
 
     let result = iterator.reduce((accumulator, item, index) => {
-      accumulator += `
-        <div
-          class="timescale-tick ${this.calcTickName(index)}"
-          style="left: ${this.calcTickXPosition(index)}%"
-        ></div>`;
+      let tickName = this.calcTickName(index);
+      let tickXPos = this.calcTickXPosition(index);
+
+      accumulator += `<div class="timescale-tick ${tickName}" style="left: ${tickXPos}%"></div>`;
       return accumulator;
     }, '');
 
@@ -93,7 +105,10 @@ export default class Timescale {
   }
 
   calcTickName(index) {
-    if (index === 0 || index === this.ticksCount) {
+    if (index % (this.ticksCount / this.scaleRatio) === 0) {
+      if (index !== 0 && index % (this.hoursStep * this.tickPerHour) === 0) {
+        return 'big shift';
+      }
       return 'big';
     }
 
@@ -122,13 +137,9 @@ export default class Timescale {
     let iterator = [...Array(this.timesCount + 1)];
 
     let result = iterator.reduce((accumulator, item, index) => {
-      accumulator += `
-        <div
-          class="timescale-time"
-          style="left: ${this.calcTimeXPosition(index)}%">
-          ${this.calcTimeLabel(index)}
-        </div>
-      `;
+      let xPos = this.calcTimeXPosition(index);
+      let timeLabel = this.calcTimeLabel(index);
+      accumulator += `<div class="timescale-time" style="left: ${xPos}%">${timeLabel}</div>`;
       return accumulator;
     }, '');
 
@@ -141,13 +152,21 @@ export default class Timescale {
   }
 
   calcTimeLabel(index) {
-    if (index === 0 || index === this.timesCount) {
+    let labelsPerDay = this.timesCount / this.scaleRatio;
+
+    if (index === 0 || index % labelsPerDay === 0) {
       return `00:00`;
     }
 
-    let timeLabel = this.secondsToTime(index * this.hoursStep * 3600);
+    if (index / labelsPerDay > 1) {
+      let rest = index % labelsPerDay;
+      let seconds = rest * this.hoursStep * 3600;
+      return this.secondsToTime(seconds).slice(0, -3);
+    }
 
-    return timeLabel.slice(0, -3);
+    let seconds = index * this.hoursStep * 3600;
+
+    return this.secondsToTime(seconds).slice(0, -3);
   }
 
   /*
@@ -168,10 +187,10 @@ export default class Timescale {
     let result = this.timeCells.reduce(
       (accumulator, { id, start, stop, type }, index) => {
         let color = this.colors[type];
-        let width = this.calcTimeCellWidth(start, stop);
         let xPos = this.calcTimeCellXPosition(start);
         let duration = this.calcTimeCellDuration(start, stop);
-        let float = this.checkTimeCellForSmallSize(width);
+        let width = this.calcTimeCellWidth(start, stop);
+        let float = this.checkTimeCellIsSmall(width);
 
         accumulator += this.trim`
           <div class="timescale-cell ${float ? 'float' : ''}"
@@ -193,31 +212,49 @@ export default class Timescale {
     return this.secondsToTime(stop - start);
   }
 
-  calcTimeCellXPosition(start) {
-    let startCellDate = new Date(start * 1000);
-
-    let hours = startCellDate.getUTCHours() * 3600 * 1000;
-    let minutes = startCellDate.getUTCMinutes() * 60 * 1000;
-    let seconds = startCellDate.getUTCSeconds() * 1000;
-    let ms = startCellDate.getMilliseconds();
-
-    let current = hours + minutes + seconds + ms;
-    let rightBorder = this.hours * 3600 * 1000;
-
-    return ((current * 100) / rightBorder).toFixed(2);
-  }
-
   calcTimeCellWidth(start, stop) {
     let timeCellMs = (stop - start) * 1000;
-    let result = (timeCellMs / (this.hours * 3600 * 1000)) * 100;
+    let result = (timeCellMs / (this.scaleHours * 3600 * 1000)) * 100;
     return result.toFixed(2);
   }
 
-  checkTimeCellForSmallSize(cellWidth) {
-    console.log(this.$element);
-    return ((this.$element.clientWidth - 10) * cellWidth) / 100 < 45
-      ? true
-      : false;
+  checkTimeCellIsSmall(cellWidth) {
+    let scaleWidth = this.$element.clientWidth * this.scaleRatio - 10;
+    return (scaleWidth * cellWidth) / 100 < 45 ? true : false;
+  }
+
+  calcTimeCellXPosition(start) {
+    let startCellDate = new Date(start * 1000);
+    let cellStartMs = this.calcTimeCellStartMs(startCellDate);
+    let fullDayInMs = this.scaleHours * 3600 * 1000;
+    return ((cellStartMs * 100) / fullDayInMs).toFixed(2);
+  }
+
+  calcTimeCellOverflow(start, stop) {
+    let startCellDate = new Date(start * 1000);
+    let stopCellDate = new Date(stop * 1000);
+
+    let cellStartMs = this.calcTimeCellStartMs(startCellDate);
+    let scaleLeftDate = this.startDayTimestamp(start, cellStartMs);
+    let scaleRightDate = scaleLeftDate + 24 * 3600 * 1000;
+
+    if (stopCellDate > scaleRightDate) {
+      return true;
+    }
+
+    return false;
+  }
+
+  calcTimeCellStartMs(date) {
+    let hours = date.getUTCHours() * 3600 * 1000;
+    let minutes = date.getUTCMinutes() * 60 * 1000;
+    let seconds = date.getUTCSeconds() * 1000;
+    let ms = date.getMilliseconds();
+    return hours + minutes + seconds + ms;
+  }
+
+  startDayTimestamp(startUnixTimestamp, passedMs) {
+    return startUnixTimestamp * 1000 - passedMs;
   }
 
   /*
