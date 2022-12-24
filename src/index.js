@@ -37,6 +37,8 @@ export default class Timescale {
     this.initTimeCells();
     this.initTicks();
     this.initTimeLabels();
+    this.initZoomSlider();
+    this.initEventListeners();
   }
 
   cellOverflowChecking() {
@@ -48,6 +50,8 @@ export default class Timescale {
     });
     return overflow;
   }
+
+  initEventListeners() {}
 
   /*
     SCALE
@@ -256,6 +260,12 @@ export default class Timescale {
   startDayTimestamp(startUnixTimestamp, passedMs) {
     return startUnixTimestamp * 1000 - passedMs;
   }
+
+  /*
+    Zoom slider
+  */
+
+  initZoomSlider() {}
 
   /*
     Helper functions
