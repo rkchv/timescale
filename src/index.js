@@ -8,10 +8,9 @@ import connectToObserver from './core/observer/connect';
 import { createElement } from './core/dom/';
 import { util } from './core/utils/';
 
-import Selection from './components/selection/';
 import Zoom from './components/zoom/';
 
-export default class Timescale {
+class Timescale {
   components = {};
 
   colors = {
@@ -29,7 +28,6 @@ export default class Timescale {
     hours = 24,
     hoursStep = 2,
     tickPerHour = 4,
-    selection = false,
     zoom = true,
   }) {
     this.$element = element;
@@ -43,28 +41,26 @@ export default class Timescale {
     this.ticksCount = this.scaleHours * this.tickPerHour;
     this.timesCount = this.scaleHours / this.hoursStep;
     this.clickTimer = null;
-    this.init(selection, zoom);
+    this.init(zoom);
   }
 
-  init(selection, zoom) {
+  init(zoom) {
     this.initScale();
     this.initTimeCells();
     this.initTicks();
     this.initTimeLabels();
-    // this.initComponents({ selection, zoom });
+    this.initComponents({ zoom });
+    this.initEventListeners();
   }
 
   initComponents(collection) {
-    if (collection['selection']) {
-      let selection = new Selection({ element: this.$element });
-      this.components = { selection };
-    }
-
     if (collection['zoom']) {
       let zoom = new Zoom({ element: this.$cells });
       this.components = { zoom };
     }
   }
+
+  initEventListeners() {}
 
   /*
     SCALE
@@ -95,26 +91,24 @@ export default class Timescale {
   }
 
   get ticksTemplate() {
-    return `<div class="timescale-ticks">${this.getTicksItems()}</div>`;
+    return `<div class="timescale-ticks">${this.ticks}</div>`;
   }
 
-  getTicksItems() {
-    let iterator = [...Array(this.ticksCount + 1)];
+  get ticks() {
+    let iterator = Array(this.ticksCount).fill(null);
 
-    let result = iterator.reduce((accumulator, item, index) => {
+    return [...iterator, null].reduce((template, item, index) => {
       let tickName = this.calcTickName(index);
       let tickXPos = this.calcTickXPosition(index);
 
-      accumulator += `<div class="timescale-tick ${tickName}" style="left: ${tickXPos}%"></div>`;
-      return accumulator;
+      template += `<div class="timescale-tick ${tickName}" style="left: ${tickXPos}%"></div>`;
+      return template;
     }, '');
-
-    return result;
   }
 
   calcTickXPosition(index) {
-    let xPos = (100 / this.ticksCount) * index;
-    return xPos.toFixed(2);
+    let x = (100 / this.ticksCount) * index;
+    return x.toFixed(2);
   }
 
   calcTickName(index) {
@@ -144,25 +138,23 @@ export default class Timescale {
   }
 
   get timeLabelsTemplate() {
-    return `<div class="timescale-times">${this.getTimeLabels()}</div>`;
+    return `<div class="timescale-times">${this.timeLabels}</div>`;
   }
 
-  getTimeLabels() {
-    let iterator = [...Array(this.timesCount + 1)];
+  get timeLabels() {
+    let iterator = Array(this.timesCount).fill(null);
 
-    let result = iterator.reduce((accumulator, item, index) => {
-      let xPos = this.calcTimeXPosition(index);
+    return [...iterator, null].reduce((template, item, index) => {
+      let left = this.calcTimeXPosition(index);
       let timeLabel = this.calcTimeLabel(index);
-      accumulator += `<div class="timescale-time" style="left: ${xPos}%">${timeLabel}</div>`;
-      return accumulator;
+      template += `<div class="timescale-time" style="left: ${left}%">${timeLabel}</div>`;
+      return template;
     }, '');
-
-    return result;
   }
 
   calcTimeXPosition(index) {
-    let xPos = (100 / this.timesCount) * index;
-    return xPos.toFixed(2);
+    let x = (100 / this.timesCount) * index;
+    return x.toFixed(2);
   }
 
   calcTimeLabel(index) {
@@ -197,24 +189,28 @@ export default class Timescale {
     return `<div class="timescale-cells">${this.getTimeCells()}</div>`;
   }
 
+  // Refactor
   getTimeCells() {
     let result = this.timeCells.reduce(
-      (accumulator, { id, start, stop, type }, index) => {
+      (template, { id, start, stop, type }, index) => {
         let color = this.colors[type];
-        let xPos = this.calcTimeCellXPosition(start);
+        let x = this.calcTimeCellXPosition(start);
         let width = this.calcTimeCellWidth(start, stop);
-        let float = this.checkTimeCellIsSmall(width);
+        let className = this.isFloating(width)
+          ? 'timescale-cell float'
+          : 'timescale-cell';
         let duration = util.secondsToTime(stop - start);
 
-        accumulator += util.trim`
-          <div class="timescale-cell ${float ? 'float' : ''}"
-            style="background-color: ${color}; left: ${xPos}%; width: ${width}%"
+        template += `
+          <div
+            class="${className}"
+            style="background-color: ${color}; left: ${x}%; width: ${width}%"
             data-id="${id}">
               <span>${duration}</span>
           </div>
         `;
 
-        return accumulator;
+        return template;
       },
       ''
     );
@@ -228,7 +224,7 @@ export default class Timescale {
     return result.toFixed(2);
   }
 
-  checkTimeCellIsSmall(cellWidth) {
+  isFloating(cellWidth) {
     let scaleWidth = this.$element.clientWidth * this.scaleRatio - 10;
     return (scaleWidth * cellWidth) / 100 < 45 ? true : false;
   }
@@ -269,6 +265,6 @@ export default class Timescale {
 
     return false;
   }
-
-  //
 }
+
+export default connectToObserver(Timescale);
