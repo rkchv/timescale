@@ -4,7 +4,16 @@
 
 import './style.scss';
 
+import connectToObserver from './core/observer/connect';
+import { createElement } from './core/dom/';
+import { util } from './core/utils/';
+
+import Selection from './components/selection/';
+import Zoom from './components/zoom/';
+
 export default class Timescale {
+  components = {};
+
   colors = {
     'file-attack': '#e9847d',
     'process-attack': '#5baeef',
@@ -15,43 +24,47 @@ export default class Timescale {
 
   constructor({
     element = null,
+    from = null,
     timeCells = [],
     hours = 24,
     hoursStep = 2,
     tickPerHour = 4,
+    selection = false,
+    zoom = true,
   }) {
     this.$element = element;
-    this.cellOverflow = false;
+    this.from = from;
     this.timeCells = timeCells;
-    this.scaleHours = !this.cellOverflowChecking() ? hours : hours * 2;
-    this.scaleRatio = !this.cellOverflowChecking() ? 1 : 2;
-    this.tickPerHour = tickPerHour;
+    this.hours = hours;
     this.hoursStep = hoursStep;
+    this.scaleHours = this.calcHourOnScale();
+    this.scaleRatio = 1 + (this.scaleHours - 24) / 24;
+    this.tickPerHour = tickPerHour;
     this.ticksCount = this.scaleHours * this.tickPerHour;
     this.timesCount = this.scaleHours / this.hoursStep;
-    this.init();
+    this.clickTimer = null;
+    this.init(selection, zoom);
   }
 
-  init() {
+  init(selection, zoom) {
     this.initScale();
     this.initTimeCells();
     this.initTicks();
     this.initTimeLabels();
-    this.initZoomSlider();
-    this.initEventListeners();
+    // this.initComponents({ selection, zoom });
   }
 
-  cellOverflowChecking() {
-    let overflow = false;
-    this.timeCells.forEach(({ start, stop }) => {
-      if (!overflow) {
-        overflow = this.calcTimeCellOverflow(start, stop);
-      }
-    });
-    return overflow;
-  }
+  initComponents(collection) {
+    if (collection['selection']) {
+      let selection = new Selection({ element: this.$element });
+      this.components = { selection };
+    }
 
-  initEventListeners() {}
+    if (collection['zoom']) {
+      let zoom = new Zoom({ element: this.$cells });
+      this.components = { zoom };
+    }
+  }
 
   /*
     SCALE
@@ -59,19 +72,15 @@ export default class Timescale {
 
   initScale() {
     let template = this.scaleTemplate;
-    this.$base = this.createElement({ template });
-    this.$scale = this.$base.firstElementChild;
-    this.$element.append(this.$base);
+    this.$scale = createElement(template);
+    this.$element.append(this.$scale);
   }
 
   get scaleTemplate() {
     return `
-      <div class="timescale">
-        <div
-          class="timescale-scale"
-          style="width: ${this.scaleRatio * 100}%">
-        </div>
-      </div>
+      <div class="timescale-scale" style="width: ${
+        this.scaleRatio.toFixed(4) * 100
+      }%"></div>
     `;
   }
 
@@ -81,7 +90,7 @@ export default class Timescale {
 
   initTicks() {
     let template = this.ticksTemplate;
-    this.$ticks = this.createElement({ template });
+    this.$ticks = createElement(template);
     this.$scale.append(this.$ticks);
   }
 
@@ -109,11 +118,12 @@ export default class Timescale {
   }
 
   calcTickName(index) {
-    if (index % (this.ticksCount / this.scaleRatio) === 0) {
-      if (index !== 0 && index % (this.hoursStep * this.tickPerHour) === 0) {
-        return 'big shift';
-      }
+    if (index % this.ticksCount === 0) {
       return 'big';
+    }
+
+    if (index % (24 * this.tickPerHour) === 0) {
+      return 'big shift';
     }
 
     if (index % (this.hoursStep * this.tickPerHour) === 0) {
@@ -129,7 +139,7 @@ export default class Timescale {
 
   initTimeLabels() {
     let template = this.timeLabelsTemplate;
-    this.$timeLabels = this.createElement({ template });
+    this.$timeLabels = createElement(template);
     this.$scale.append(this.$timeLabels);
   }
 
@@ -165,12 +175,12 @@ export default class Timescale {
     if (index / labelsPerDay > 1) {
       let rest = index % labelsPerDay;
       let seconds = rest * this.hoursStep * 3600;
-      return this.secondsToTime(seconds).slice(0, -3);
+      return util.secondsToTime(seconds).slice(0, -3);
     }
 
     let seconds = index * this.hoursStep * 3600;
 
-    return this.secondsToTime(seconds).slice(0, -3);
+    return util.secondsToTime(seconds).slice(0, -3);
   }
 
   /*
@@ -179,8 +189,8 @@ export default class Timescale {
 
   initTimeCells() {
     let template = this.timeCellsTemplate;
-    this.$timeCells = this.createElement({ template });
-    this.$scale.append(this.$timeCells);
+    this.$cells = createElement(template);
+    this.$scale.append(this.$cells);
   }
 
   get timeCellsTemplate() {
@@ -192,11 +202,11 @@ export default class Timescale {
       (accumulator, { id, start, stop, type }, index) => {
         let color = this.colors[type];
         let xPos = this.calcTimeCellXPosition(start);
-        let duration = this.calcTimeCellDuration(start, stop);
         let width = this.calcTimeCellWidth(start, stop);
         let float = this.checkTimeCellIsSmall(width);
+        let duration = util.secondsToTime(stop - start);
 
-        accumulator += this.trim`
+        accumulator += util.trim`
           <div class="timescale-cell ${float ? 'float' : ''}"
             style="background-color: ${color}; left: ${xPos}%; width: ${width}%"
             data-id="${id}">
@@ -212,10 +222,6 @@ export default class Timescale {
     return result;
   }
 
-  calcTimeCellDuration(start, stop) {
-    return this.secondsToTime(stop - start);
-  }
-
   calcTimeCellWidth(start, stop) {
     let timeCellMs = (stop - start) * 1000;
     let result = (timeCellMs / (this.scaleHours * 3600 * 1000)) * 100;
@@ -229,85 +235,39 @@ export default class Timescale {
 
   calcTimeCellXPosition(start) {
     let startCellDate = new Date(start * 1000);
-    let cellStartMs = this.calcTimeCellStartMs(startCellDate);
+    let cellStartMs = util.milliseconds(startCellDate);
     let fullDayInMs = this.scaleHours * 3600 * 1000;
     return ((cellStartMs * 100) / fullDayInMs).toFixed(2);
   }
 
-  calcTimeCellOverflow(start, stop) {
-    let startCellDate = new Date(start * 1000);
-    let stopCellDate = new Date(stop * 1000);
+  calcHourOnScale() {
+    let overflowInHours = this.cellOverflowChecking();
+    return this.hours + overflowInHours * this.hoursStep;
+  }
 
-    let cellStartMs = this.calcTimeCellStartMs(startCellDate);
-    let scaleLeftDate = this.startDayTimestamp(start, cellStartMs);
-    let scaleRightDate = scaleLeftDate + 24 * 3600 * 1000;
+  cellOverflowChecking() {
+    let max = 0;
 
-    if (stopCellDate > scaleRightDate) {
-      return true;
+    this.timeCells.forEach(({ start, stop }) => {
+      let result = this.calcCellOverflow(stop);
+      if (result && max < result) {
+        max = result;
+      }
+    });
+
+    return Math.round(max);
+  }
+
+  calcCellOverflow(stop) {
+    let cellEndTimestamp = stop * 1000;
+    let nextDayTimestamp = this.from * 1000 + 3600 * this.hours * 1000;
+
+    if (cellEndTimestamp > nextDayTimestamp) {
+      let hours = (cellEndTimestamp - nextDayTimestamp) / 1000 / 60 / 60;
+      return hours;
     }
 
     return false;
-  }
-
-  calcTimeCellStartMs(date) {
-    let hours = date.getUTCHours() * 3600 * 1000;
-    let minutes = date.getUTCMinutes() * 60 * 1000;
-    let seconds = date.getUTCSeconds() * 1000;
-    let ms = date.getMilliseconds();
-    return hours + minutes + seconds + ms;
-  }
-
-  startDayTimestamp(startUnixTimestamp, passedMs) {
-    return startUnixTimestamp * 1000 - passedMs;
-  }
-
-  /*
-    Zoom slider
-  */
-
-  initZoomSlider() {}
-
-  /*
-    Helper functions
-  */
-
-  createElement({ template, tagName = 'div' }) {
-    let element = document.createElement(`${tagName}`);
-    element.innerHTML = template;
-    return element.firstElementChild;
-  }
-
-  secondsToTime(timeInSeconds) {
-    let pad = function (num, size) {
-      return ('000' + num).slice(size * -1);
-    };
-
-    let time = parseFloat(timeInSeconds).toFixed(3);
-    let hours = Math.floor(time / 60 / 60);
-    let minutes = Math.floor(time / 60) % 60;
-    let seconds = Math.floor(time - minutes * 60);
-    let milliseconds = time.slice(-3);
-
-    return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2);
-  }
-
-  trim(strings, ...values) {
-    let output = '';
-    for (let i = 0; i < values.length; i++) {
-      output += strings[i] + values[i];
-    }
-    output += strings[values.length];
-
-    // Split on newlines.
-    let lines = output.split(/(?:\r\n|\n|\r)/);
-
-    // Rip out the leading whitespace.
-    return lines
-      .map(line => {
-        return line.replace(/^\s+/gm, '');
-      })
-      .join(' ')
-      .trim();
   }
 
   //

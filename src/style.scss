@@ -9,6 +9,7 @@ body {
 }
 
 .timescale {
+  position: relative;
   display: block;
   width: 100%;
   overflow: hidden;
@@ -54,6 +55,10 @@ body {
 
     }
 
+    &:last-child {
+      transform: translateX(-1px);
+    }
+
   }
 
   &-times {
@@ -75,6 +80,8 @@ body {
     font-family: "Noto Sans";
     color: gray;
     transform: translateX(-50%);
+    user-select: none;
+    pointer-events: none;
 
     &:first-child {
       transform: none;
@@ -119,6 +126,11 @@ body {
     white-space: nowrap;
     opacity: 0.65;
 
+    span {
+      pointer-events: none;
+      user-select: none;
+    }
+
     &.float {
       overflow: initial;
 
@@ -130,6 +142,17 @@ body {
 
     }
 
+  }
+
+  &-selection {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    width: 0;
+    height: 0;
+    border: 1px solid #009fe3;
+    background-color: rgba(0, 159, 227, .15);
   }
 
 }
