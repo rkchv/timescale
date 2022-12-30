@@ -71,8 +71,7 @@ import Timescale from './src/';
   let element = document.getElementById('timescale');
 
   for (var property in timeCells) {
-    new Timescale({
-      element,
+    new Timescale(element, {
       from: property,
       timeCells: timeCells[property],
     });

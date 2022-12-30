@@ -32,6 +32,8 @@ body {
     bottom: 0;
     z-index: 2;
     height: 50px;
+    user-select: none;
+    pointer-events: none;
   }
 
   &-tick {
@@ -69,6 +71,8 @@ body {
     bottom: 0;
     z-index: 2;
     height: 100%;
+    user-select: none;
+    pointer-events: none;
   }
 
   &-time {
@@ -80,8 +84,6 @@ body {
     font-family: "Noto Sans";
     color: gray;
     transform: translateX(-50%);
-    user-select: none;
-    pointer-events: none;
 
     &:first-child {
       transform: none;
@@ -104,6 +106,7 @@ body {
     z-index: 3;
     height: 50px;
     top: 40px;
+    cursor: zoom-in;
   }
 
   &-cell {

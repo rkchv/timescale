@@ -8,9 +8,11 @@ import connectToObserver from './core/observer/connect';
 import { createElement } from './core/dom/';
 import { util } from './core/utils/';
 
+import Selection from './components/selection';
 import Zoom from './components/zoom/';
 
 class Timescale {
+  subscriptions = [];
   components = {};
 
   colors = {
@@ -21,46 +23,66 @@ class Timescale {
     'suspicious-activity': '#4bc580',
   };
 
-  constructor({
+  constructor(
     element = null,
-    from = null,
-    timeCells = [],
-    hours = 24,
-    hoursStep = 2,
-    tickPerHour = 4,
-    zoom = true,
-  }) {
+    // as State
+    {
+      from = null,
+      timeCells = [],
+      hours = 24,
+      hoursStep = 2,
+      tickPerHour = 4,
+      // zoom = true,
+      // selection = true,
+    },
+    observer
+  ) {
+    this.observer = observer;
     this.$element = element;
     this.from = from;
     this.timeCells = timeCells;
     this.hours = hours;
     this.hoursStep = hoursStep;
-    this.scaleHours = this.calcHourOnScale();
-    this.scaleRatio = 1 + (this.scaleHours - 24) / 24;
     this.tickPerHour = tickPerHour;
-    this.ticksCount = this.scaleHours * this.tickPerHour;
-    this.timesCount = this.scaleHours / this.hoursStep;
-    this.clickTimer = null;
-    this.init(zoom);
+    this.init();
   }
 
-  init(zoom) {
+  init() {
     this.initScale();
     this.initTimeCells();
     this.initTicks();
     this.initTimeLabels();
-    this.initComponents({ zoom });
+    this.initComponents();
     this.initEventListeners();
   }
 
-  initComponents(collection) {
-    if (collection['zoom']) {
-      let zoom = new Zoom({ element: this.$cells });
-      this.components = { zoom };
-    }
+  initComponents() {
+    let zoom = new Zoom({ element: this.$cells });
+    // let selection = new Selection({ element: this.$times });
+    this.components = { zoom };
   }
 
-  initEventListeners() {}
+  initEventListeners() {
+    this.registerObserverEvent('move', () => console.log('move catch...'));
+  }
+
+  // ----------------------------------------
+
+  get timesCount() {
+    return this.scaleHours / this.hoursStep;
+  }
+
+  get ticksCount() {
+    return this.scaleHours * this.tickPerHour;
+  }
+
+  get scaleRatio() {
+    return 1 + (this.scaleHours - 24) / 24;
+  }
+
+  get scaleHours() {
+    return this.calcHourOnScale();
+  }
 
   /*
     SCALE
@@ -133,11 +155,12 @@ class Timescale {
 
   initTimeLabels() {
     let template = this.timeLabelsTemplate;
-    this.$timeLabels = createElement(template);
-    this.$scale.append(this.$timeLabels);
+    this.$times = createElement(template);
+    this.$scale.append(this.$times);
   }
 
   get timeLabelsTemplate() {
+    // return `<div class="timescale-times" data-times>${this.timeLabels}</div>`;
     return `<div class="timescale-times">${this.timeLabels}</div>`;
   }
 
@@ -264,6 +287,11 @@ class Timescale {
     }
 
     return false;
+  }
+
+  registerObserverEvent(type, callback) {
+    const handler = this.observer.subscribe(type, callback);
+    this.subscriptions.push(handler);
   }
 }
 

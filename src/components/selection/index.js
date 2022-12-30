@@ -4,7 +4,7 @@
 
 import connectToObserver from '../../core/observer/connect';
 import { createElement } from '../../core/dom/';
-import { trim } from '../../core/utils/';
+import { util } from '../../core/utils/';
 
 class Selection {
   startX = null;
@@ -40,16 +40,17 @@ class Selection {
     this.startX = e.clientX - this.offsetElemX;
     this.startY = e.clientY - this.offsetElemY;
     this.$element.style.cursor = 'crosshair';
-    this.$element.addEventListener('mousemove', this.setSize);
+    document.addEventListener('mousemove', this.setSize);
     this.insertSelection();
   }
 
   onFinish(e) {
     this.$element.style.cursor = 'default';
-    this.$element.removeEventListener('mousemove', this.setSize);
+    document.removeEventListener('mousemove', this.setSize);
     this.remove();
-    this.dispatch();
     this.clean();
+    if (!e.target.dataset.times) return;
+    this.dispatch();
   }
 
   insertSelection() {
@@ -68,7 +69,7 @@ class Selection {
   }
 
   get template() {
-    return trim`
+    return util.trim`
       <div
         class="timescale-selection"
         style="left: ${this.startX}px; top: ${this.startY}px">
@@ -77,6 +78,7 @@ class Selection {
   }
 
   remove() {
+    if (!this.$selection) return;
     this.$selection.remove();
   }
 
