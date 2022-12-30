@@ -42,18 +42,15 @@ class Move {
   }
 
   onMouseMove(event) {
-    let d = this.transformX + event.clientX - this.xFrom;
+    let newXpos = this.transformX + event.clientX - this.xFrom;
 
-    if (d < 0 && d > -this.maxOffset) {
-      this.xTo = this.transformX + event.clientX - this.xFrom;
-      // this.dispatchEvent(this.xTo);
-      debounce(this.dispatchEvent(this.xTo), 80);
+    if (newXpos < 0 && newXpos > -this.maxOffset) {
+      this.xTo = newXpos;
+      this.dispatchEvent(this.xTo);
     }
   }
 
   onMouseUp(event) {
-    // event.preventDefault();
-    console.log('Mouseup');
     this.transformX = this.xTo;
     this.$element.removeEventListener('mousemove', this.onMouseMove);
   }

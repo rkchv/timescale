@@ -85,8 +85,11 @@ body {
     font-family: "Noto Sans";
     color: gray;
     transform: translateX(-50%);
-    // user-select: none;
-    pointer-events: none;
+
+    * {
+      user-select: none;
+      pointer-events: none;
+    }
 
     &:first-child {
       transform: none;
