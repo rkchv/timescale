@@ -44,6 +44,7 @@ class Timescale {
     this.hours = hours;
     this.hoursStep = hoursStep;
     this.tickPerHour = tickPerHour;
+    this.scaleXpos = 0;
     this.init();
   }
 
@@ -57,13 +58,17 @@ class Timescale {
   }
 
   initComponents() {
-    let zoom = new Zoom({ element: this.$cells });
+    let zoom = new Zoom({ element: this.$times });
     // let selection = new Selection({ element: this.$times });
     this.components = { zoom };
   }
 
   initEventListeners() {
-    this.registerObserverEvent('move', () => console.log('move catch...'));
+    this.registerObserverEvent('move', this.moveScale.bind(this));
+  }
+
+  moveScale({ value }) {
+    this.$scale.style.transform = `translateX(${value}px)`;
   }
 
   // ----------------------------------------
@@ -83,6 +88,10 @@ class Timescale {
   get scaleHours() {
     return this.calcHourOnScale();
   }
+
+  // get scaleXpos() {
+  //   return 0;
+  // }
 
   /*
     SCALE

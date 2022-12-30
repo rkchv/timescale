@@ -8,6 +8,9 @@ class Zoom {
   constructor({ element }, observer) {
     this.observer = observer;
     this.$element = element;
+    this.shiftStart = 0;
+    this.shiftDelta = 0;
+    this.x = 0;
     this.init();
   }
 
@@ -26,8 +29,9 @@ class Zoom {
   initEventListeners() {
     this.$element.addEventListener('mousedown', this.onScaleMouseDown);
     this.$element.addEventListener('mouseup', this.onScaleMouseUp);
-    this.$element.addEventListener('click', this.onClick.bind(this));
-    this.$element.addEventListener('dblclick', this.onDoubleClick.bind(this));
+    // this.$element.addEventListener('click', this.onClick.bind(this));
+    // this.$element.addEventListener('dblclick', this.onDoubleClick.bind(this));
+    this.$element.addEventListener('dragstart', () => false);
     // this.$element.addEventListener('mousewheel', this.onMouseWheel.bind(this));
   }
 
@@ -57,20 +61,25 @@ class Zoom {
 
   onScaleMouseDown(event) {
     if (event.detail === 1 && !event.target.dataset.id) {
-      console.log('SCALE MOUSEDOWN');
+      // 400px
+      this.shiftStart = event.clientX;
+      console.log('SCALE MOUSEDOWN', this.shiftStart);
       this.$element.addEventListener('mousemove', this.onMouseMove);
     }
   }
 
-  onScaleMouseUp(event) {
-    if (event.detail === 1 && !event.target.dataset.id) {
-      console.log('SCALE MOUSEUP');
-      this.$element.removeEventListener('mousemove', this.onMouseMove);
-    }
+  onMouseMove(event) {
+    this.shiftDelta = this.x + event.clientX - this.shiftStart;
+    this.dispatchEvent(this.shiftDelta);
   }
 
-  onMouseMove() {
-    this.dispatchEvent(0);
+  onScaleMouseUp(event) {
+    if (event.detail === 1 && !event.target.dataset.id) {
+      this.x = this.shiftDelta;
+      console.log('SCALE MOUSEUP');
+      // this.xStart = event.clientX;
+      this.$element.removeEventListener('mousemove', this.onMouseMove);
+    }
   }
 
   zoom() {
@@ -85,7 +94,7 @@ class Zoom {
   }
 
   dispatchEvent(value) {
-    this.observer.dispatchEvent({ type: 'move', detail: { value } });
+    this.observer.dispatchEvent({ type: 'move', payload: { value } });
   }
 
   calcShift() {
