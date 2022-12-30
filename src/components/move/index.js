@@ -29,22 +29,20 @@ class Move {
 
   initEventListeners() {
     this.$element.addEventListener('mousedown', this.onMouseDown);
-    this.$element.addEventListener('mouseup', this.onMouseUp);
+    document.addEventListener('mouseup', this.onMouseUp);
     this.$element.addEventListener('dragstart', () => false);
   }
 
   onMouseDown(event) {
     this.xFrom = event.clientX;
-    this.childWidth = parseFloat(window.getComputedStyle(this.$element).width);
-    this.parentWidth = parseFloat(window.getComputedStyle(this.$parent).width);
-    this.maxOffset = this.childWidth - this.parentWidth;
-    this.$element.addEventListener('mousemove', this.onMouseMove);
+    this.maxOffset = this.childWidth - this.parentWidth + 2;
+    document.addEventListener('mousemove', this.onMouseMove);
   }
 
   onMouseMove(event) {
     let newXpos = this.transformX + event.clientX - this.xFrom;
 
-    if (newXpos < 0 && newXpos > -this.maxOffset) {
+    if (newXpos < 1 && newXpos > -this.maxOffset) {
       this.xTo = newXpos;
       this.dispatchEvent(this.xTo);
     }
@@ -52,7 +50,15 @@ class Move {
 
   onMouseUp(event) {
     this.transformX = this.xTo;
-    this.$element.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mousemove', this.onMouseMove);
+  }
+
+  get childWidth() {
+    return parseFloat(window.getComputedStyle(this.$element).width);
+  }
+
+  get parentWidth() {
+    return parseFloat(window.getComputedStyle(this.$parent).width);
   }
 
   dispatchEvent(value) {
