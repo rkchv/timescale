@@ -73,6 +73,7 @@ body {
     left: 0;
     right: 0;
     cursor: move;
+    user-select: none;
   }
 
   &-time {
@@ -84,7 +85,7 @@ body {
     font-family: "Noto Sans";
     color: gray;
     transform: translateX(-50%);
-    user-select: none;
+    // user-select: none;
     pointer-events: none;
 
     &:first-child {

@@ -3,14 +3,15 @@
  */
 
 import connectToObserver from '../../core/observer/connect';
+import { debounce } from '../../core/utils';
 
 class Zoom {
   constructor({ element }, observer) {
     this.observer = observer;
     this.$element = element;
-    this.shiftStart = 0;
-    this.shiftDelta = 0;
-    this.x = 0;
+    this.xFrom = 0;
+    this.xTo = 0;
+    this.transformX = 0;
     this.init();
   }
 
@@ -61,23 +62,37 @@ class Zoom {
 
   onScaleMouseDown(event) {
     if (event.detail === 1 && !event.target.dataset.id) {
-      // 400px
-      this.shiftStart = event.clientX;
-      console.log('SCALE MOUSEDOWN', this.shiftStart);
+      this.xFrom = event.clientX;
+      console.log('SCALE MOUSEDOWN', this.xFrom);
       this.$element.addEventListener('mousemove', this.onMouseMove);
     }
   }
 
   onMouseMove(event) {
-    this.shiftDelta = this.x + event.clientX - this.shiftStart;
-    this.dispatchEvent(this.shiftDelta);
+    let childWidth = parseInt(window.getComputedStyle(this.$element).width);
+    let parentWidth = parseInt(
+      window.getComputedStyle(this.$element.parentNode.parentNode).width
+    );
+
+    // разница в пикселях
+    let d = this.transformX + event.clientX - this.xFrom;
+
+    if (d < 0 && d > -Math.abs(childWidth - parentWidth + 2)) {
+      this.xTo = this.transformX + event.clientX - this.xFrom;
+      this.dispatchEvent(this.xTo);
+      // debounce(this.dispatchEvent(this.xTo), 25);
+    }
+
+    // if (this.xTo < 0 && this.xTo > -Math.abs(scaleWidth - parentWidth)) {
+    // debounce(this.dispatchEvent(this.xTo), 25);
+    // }
   }
 
   onScaleMouseUp(event) {
     if (event.detail === 1 && !event.target.dataset.id) {
-      this.x = this.shiftDelta;
+      this.transformX = this.xTo;
       console.log('SCALE MOUSEUP');
-      // this.xStart = event.clientX;
+      // this.transformXStart = event.clientX;
       this.$element.removeEventListener('mousemove', this.onMouseMove);
     }
   }
