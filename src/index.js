@@ -9,7 +9,7 @@ import { createElement } from './core/dom/';
 import { util } from './core/utils/';
 
 import Selection from './components/selection';
-import Move from './components/move/';
+import Movetool from './components/movetool';
 
 class Timescale {
   subscriptions = [];
@@ -58,7 +58,7 @@ class Timescale {
   }
 
   initComponents() {
-    let move = new Move({ element: this.$times });
+    let move = new Movetool({ element: this.$times });
     // let selection = new Selection({ element: this.$times });
     this.components = { move };
   }

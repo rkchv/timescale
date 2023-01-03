@@ -5,7 +5,7 @@
 import connectToObserver from '../../core/observer/connect';
 import { debounce } from '../../core/utils';
 
-class Move {
+class Movetool {
   constructor({ element }, observer) {
     this.observer = observer;
     this.$element = element;
@@ -29,21 +29,21 @@ class Move {
 
   initEventListeners() {
     this.$element.addEventListener('mousedown', this.onMouseDown);
-    document.addEventListener('mouseup', this.onMouseUp);
     this.$element.addEventListener('dragstart', () => false);
+    document.addEventListener('mouseup', this.onMouseUp);
   }
 
   onMouseDown(event) {
     this.xFrom = event.clientX;
-    this.maxOffset = this.childWidth - this.parentWidth + 2;
+    this.maxOffset = this.childWidth - this.parentWidth + 1;
     document.addEventListener('mousemove', this.onMouseMove);
   }
 
   onMouseMove(event) {
-    let newXpos = this.transformX + event.clientX - this.xFrom;
+    let newX = this.transformX + event.clientX - this.xFrom;
 
-    if (newXpos < 1 && newXpos > -this.maxOffset) {
-      this.xTo = newXpos;
+    if (newX !== this.xTo && newX < 1 && newX > -this.maxOffset) {
+      this.xTo = newX;
       this.dispatchEvent(this.xTo);
     }
   }
@@ -64,8 +64,6 @@ class Move {
   dispatchEvent(value) {
     this.observer.dispatchEvent({ type: 'move', payload: { value } });
   }
-
-  //
 }
 
-export default connectToObserver(Move);
+export default connectToObserver(Movetool);
