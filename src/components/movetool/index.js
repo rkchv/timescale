@@ -3,13 +3,13 @@
  */
 
 import connectToObserver from '../../core/observer/connect';
-import { debounce } from '../../core/utils';
+import { round } from '../../core/utils';
 
 class Movetool {
   constructor({ element }, observer) {
     this.observer = observer;
     this.$element = element;
-    this.$parent = this.$element.parentNode.parentNode;
+    this.$parent = this.$element.closest('.timescale');
     this.xFrom = 0;
     this.xTo = 0;
     this.transformX = 0;
@@ -35,16 +35,19 @@ class Movetool {
 
   onMouseDown(event) {
     this.xFrom = event.clientX;
-    this.maxOffset = this.childWidth - this.parentWidth + 1;
+    let maxOffset = ((this.width - this.scaleWidth) / this.width) * 100;
+    this.maxOffset = round(maxOffset);
     document.addEventListener('mousemove', this.onMouseMove);
   }
 
   onMouseMove(event) {
-    let newX = this.transformX + event.clientX - this.xFrom;
+    let shift = ((event.clientX - this.xFrom) / this.width) * 100;
+    let newX = round(this.transformX + shift);
 
-    if (newX !== this.xTo && newX < 1 && newX > -this.maxOffset) {
+    if (newX !== this.xTo && newX <= 0 && newX >= -this.maxOffset) {
       this.xTo = newX;
       this.dispatchEvent(this.xTo);
+      console.log(newX);
     }
   }
 
@@ -53,11 +56,11 @@ class Movetool {
     document.removeEventListener('mousemove', this.onMouseMove);
   }
 
-  get childWidth() {
+  get width() {
     return parseFloat(window.getComputedStyle(this.$element).width);
   }
 
-  get parentWidth() {
+  get scaleWidth() {
     return parseFloat(window.getComputedStyle(this.$parent).width);
   }
 

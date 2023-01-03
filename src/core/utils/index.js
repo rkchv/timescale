@@ -60,3 +60,7 @@ export const debounce = (fn, delay = 0) => {
     }, delay);
   };
 };
+
+export const round = (number) => {
+  return Math.ceil(number * 100) / 100;
+}

@@ -8,8 +8,8 @@ import connectToObserver from './core/observer/connect';
 import { createElement } from './core/dom/';
 import { util } from './core/utils/';
 
-import Selection from './components/selection';
 import Movetool from './components/movetool';
+import Zoomtool from './components/zoomtool';
 
 class Timescale {
   subscriptions = [];
@@ -26,15 +26,7 @@ class Timescale {
   constructor(
     element = null,
     // as State
-    {
-      from = null,
-      timeCells = [],
-      hours = 24,
-      hoursStep = 2,
-      tickPerHour = 4,
-      // zoom = true,
-      // selection = true,
-    },
+    { from = null, timeCells = [], hours = 24, hoursStep = 2, tickPerHour = 4 },
     observer
   ) {
     this.observer = observer;
@@ -59,16 +51,21 @@ class Timescale {
 
   initComponents() {
     let move = new Movetool({ element: this.$times });
-    // let selection = new Selection({ element: this.$times });
-    this.components = { move };
+    let zoom = new Zoomtool({ element: this.$cells });
+    this.components = { move, zoom };
   }
 
   initEventListeners() {
     this.registerObserverEvent('move', this.moveScale.bind(this));
+    this.registerObserverEvent('zoom', this.zoomScale.bind(this));
   }
 
   moveScale({ value }) {
-    this.$scale.style.transform = `translateX(${value}px)`;
+    this.$scale.style.transform = `translateX(${value.toFixed(2)}%)`;
+  }
+
+  zoomScale({ value, shift }) {
+    console.log('zoom value:', value, 'shift value:', shift);
   }
 
   // ----------------------------------------
@@ -89,10 +86,6 @@ class Timescale {
     return this.calcHourOnScale();
   }
 
-  // get scaleXpos() {
-  //   return 0;
-  // }
-
   /*
     SCALE
   */
@@ -104,11 +97,8 @@ class Timescale {
   }
 
   get scaleTemplate() {
-    return `
-      <div class="timescale-scale" style="width: ${
-        this.scaleRatio.toFixed(4) * 100
-      }%"></div>
-    `;
+    let width = (Math.floor(this.scaleRatio * 10000) / 10000) * 100;
+    return `<div class="timescale-scale" style="width: ${width}%"></div>`;
   }
 
   /*
@@ -169,7 +159,6 @@ class Timescale {
   }
 
   get timeLabelsTemplate() {
-    // return `<div class="timescale-times" data-times>${this.timeLabels}</div>`;
     return `<div class="timescale-times">${this.timeLabels}</div>`;
   }
 
@@ -190,7 +179,7 @@ class Timescale {
   }
 
   calcTimeLabel(index) {
-    let labelsPerDay = this.timesCount / this.scaleRatio;
+    let labelsPerDay = 24 / this.hoursStep;
 
     if (index === 0 || index % labelsPerDay === 0) {
       return `00:00`;
@@ -257,7 +246,7 @@ class Timescale {
   }
 
   isFloating(cellWidth) {
-    let scaleWidth = this.$element.clientWidth * this.scaleRatio - 10;
+    let scaleWidth = this.$element.clientWidth * this.scaleRatio;
     return (scaleWidth * cellWidth) / 100 < 45 ? true : false;
   }
 
