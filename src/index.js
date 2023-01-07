@@ -87,9 +87,9 @@ class Timescale {
     this.element.style.transform = `translateX(${value}%)`;
   }
 
-  zoom({ width, transform }) {
+  zoom({ width, shift }) {
     this.element.style.width = `${width}%`;
-    this.element.style.transform = `translateX(${transform}%)`;
+    this.element.style.transform = `translateX(${shift}%)`;
   }
 
   get scaleWidth() {

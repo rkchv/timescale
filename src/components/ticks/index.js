@@ -20,15 +20,12 @@ class Ticks {
 
   init() {
     this.render();
-    // this.initEventListeners();
   }
 
   render() {
     let template = this.template;
     this.element = createElement(template);
   }
-
-  initEventListeners() {}
 
   get template() {
     return `<div class="timescale-ticks">${this.ticks}</div>`;
@@ -70,8 +67,6 @@ class Ticks {
   get count() {
     return this.hours * this.perHour;
   }
-
-  //
 }
 
 export default connectToObserver(Ticks);
