@@ -47,7 +47,6 @@ class Movetool {
     if (newX !== this.xTo && newX <= 0 && newX >= -this.maxOffset) {
       this.xTo = newX;
       this.dispatchEvent(this.xTo);
-      console.log(newX);
     }
   }
 
@@ -57,11 +56,11 @@ class Movetool {
   }
 
   get width() {
-    return parseFloat(window.getComputedStyle(this.$element).width);
+    return this.$element.getBoundingClientRect().width;
   }
 
   get scaleWidth() {
-    return parseFloat(window.getComputedStyle(this.$parent).width);
+    return this.$parent.getBoundingClientRect().width;
   }
 
   dispatchEvent(value) {

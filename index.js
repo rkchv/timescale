@@ -14,7 +14,7 @@ import Timescale from './src/';
 (function () {
   // UTC время
 
-  var timeCells = {
+  var cells = {
     1670803200: [
       {
         id: '0i75sxs678',
@@ -70,10 +70,10 @@ import Timescale from './src/';
 
   let element = document.getElementById('timescale');
 
-  for (var property in timeCells) {
+  for (var property in cells) {
     new Timescale(element, {
       from: property,
-      timeCells: timeCells[property],
+      cells: cells[property],
     });
   }
 })();

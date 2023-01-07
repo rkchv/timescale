@@ -5,292 +5,99 @@
 import './style.scss';
 
 import connectToObserver from './core/observer/connect';
-import { createElement } from './core/dom/';
-import { util } from './core/utils/';
 
-import Movetool from './components/movetool';
-import Zoomtool from './components/zoomtool';
+import { createElement, getSubElements } from './core/dom/';
+import { calcHours, round } from './core/utils/';
+
+import Cells from './components/cells/';
+import Ticks from './components/ticks/';
+import Times from './components/times/';
 
 class Timescale {
-  subscriptions = [];
   components = {};
-
-  colors = {
-    'file-attack': '#e9847d',
-    'process-attack': '#5baeef',
-    'registry-attack': '#b17bb9',
-    'network-attack': '#8ec519',
-    'suspicious-activity': '#4bc580',
-  };
+  subElements = [];
+  subscriptions = [];
 
   constructor(
-    element = null,
-    // as State
-    { from = null, timeCells = [], hours = 24, hoursStep = 2, tickPerHour = 4 },
+    root = null,
+    { cells = [], from, hours = 24, step = 2 },
     observer
   ) {
     this.observer = observer;
-    this.$element = element;
+    this.root = root;
     this.from = from;
-    this.timeCells = timeCells;
-    this.hours = hours;
-    this.hoursStep = hoursStep;
-    this.tickPerHour = tickPerHour;
-    this.scaleXpos = 0;
+    this.cells = cells;
+    this.step = step;
+    this.hours = calcHours(cells, from, hours, step);
+
     this.init();
   }
 
   init() {
-    this.initScale();
-    this.initTimeCells();
-    this.initTicks();
-    this.initTimeLabels();
+    this.render();
+    this.subElements = getSubElements(this.element);
     this.initComponents();
+    this.renderComponents();
     this.initEventListeners();
+    this.root.append(this.element);
+  }
+
+  render() {
+    let template = this.template;
+    this.element = createElement(template);
+  }
+
+  get template() {
+    return `
+      <div class="timescale-scale" style="width: ${this.scaleWidth}%">
+        <div data-element="cells"></div>
+        <div data-element="ticks"></div>
+        <div data-element="times"></div>
+      </div>
+    `;
   }
 
   initComponents() {
-    let move = new Movetool({ element: this.$times });
-    let zoom = new Zoomtool({ element: this.$cells });
-    this.components = { move, zoom };
+    let cells = new Cells({ hours: this.hours, data: this.cells });
+    let ticks = new Ticks({ hours: this.hours, step: this.step });
+    let times = new Times({ hours: this.hours, step: this.step });
+
+    this.components = { cells, ticks, times };
   }
 
   initEventListeners() {
-    this.registerObserverEvent('move', this.moveScale.bind(this));
-    this.registerObserverEvent('zoom', this.zoomScale.bind(this));
+    this.registerObserverEvent('move', this.move.bind(this));
+    this.registerObserverEvent('zoom', this.zoom.bind(this));
   }
 
-  moveScale({ value }) {
-    this.$scale.style.transform = `translateX(${value.toFixed(2)}%)`;
-  }
-
-  zoomScale({ value, shift }) {
-    console.log('zoom value:', value, 'shift value:', shift);
-  }
-
-  // ----------------------------------------
-
-  get timesCount() {
-    return this.scaleHours / this.hoursStep;
-  }
-
-  get ticksCount() {
-    return this.scaleHours * this.tickPerHour;
-  }
-
-  get scaleRatio() {
-    return 1 + (this.scaleHours - 24) / 24;
-  }
-
-  get scaleHours() {
-    return this.calcHourOnScale();
-  }
-
-  /*
-    SCALE
-  */
-
-  initScale() {
-    let template = this.scaleTemplate;
-    this.$scale = createElement(template);
-    this.$element.append(this.$scale);
-  }
-
-  get scaleTemplate() {
-    let width = (Math.floor(this.scaleRatio * 10000) / 10000) * 100;
-    return `<div class="timescale-scale" style="width: ${width}%"></div>`;
-  }
-
-  /*
-    TICKS
-  */
-
-  initTicks() {
-    let template = this.ticksTemplate;
-    this.$ticks = createElement(template);
-    this.$scale.append(this.$ticks);
-  }
-
-  get ticksTemplate() {
-    return `<div class="timescale-ticks">${this.ticks}</div>`;
-  }
-
-  get ticks() {
-    let iterator = Array(this.ticksCount).fill(null);
-
-    return [...iterator, null].reduce((template, item, index) => {
-      let tickName = this.calcTickName(index);
-      let tickXPos = this.calcTickXPosition(index);
-
-      template += `<div class="timescale-tick ${tickName}" style="left: ${tickXPos}%"></div>`;
-      return template;
-    }, '');
-  }
-
-  calcTickXPosition(index) {
-    let x = (100 / this.ticksCount) * index;
-    return x.toFixed(2);
-  }
-
-  calcTickName(index) {
-    if (index % this.ticksCount === 0) {
-      return 'big';
+  renderComponents() {
+    for (const componentName of Object.keys(this.components)) {
+      const root = this.subElements[componentName];
+      const { element } = this.components[componentName];
+      root.append(element);
     }
-
-    if (index % (24 * this.tickPerHour) === 0) {
-      return 'big shift';
-    }
-
-    if (index % (this.hoursStep * this.tickPerHour) === 0) {
-      return 'middle';
-    }
-
-    return 'small';
-  }
-
-  /*
-    TIMELABELS
-  */
-
-  initTimeLabels() {
-    let template = this.timeLabelsTemplate;
-    this.$times = createElement(template);
-    this.$scale.append(this.$times);
-  }
-
-  get timeLabelsTemplate() {
-    return `<div class="timescale-times">${this.timeLabels}</div>`;
-  }
-
-  get timeLabels() {
-    let iterator = Array(this.timesCount).fill(null);
-
-    return [...iterator, null].reduce((template, item, index) => {
-      let left = this.calcTimeXPosition(index);
-      let timeLabel = this.calcTimeLabel(index);
-      template += `<div class="timescale-time" style="left: ${left}%">${timeLabel}</div>`;
-      return template;
-    }, '');
-  }
-
-  calcTimeXPosition(index) {
-    let x = (100 / this.timesCount) * index;
-    return x.toFixed(2);
-  }
-
-  calcTimeLabel(index) {
-    let labelsPerDay = 24 / this.hoursStep;
-
-    if (index === 0 || index % labelsPerDay === 0) {
-      return `00:00`;
-    }
-
-    if (index / labelsPerDay > 1) {
-      let rest = index % labelsPerDay;
-      let seconds = rest * this.hoursStep * 3600;
-      return util.secondsToTime(seconds).slice(0, -3);
-    }
-
-    let seconds = index * this.hoursStep * 3600;
-
-    return util.secondsToTime(seconds).slice(0, -3);
-  }
-
-  /*
-    TIMECELLS
-  */
-
-  initTimeCells() {
-    let template = this.timeCellsTemplate;
-    this.$cells = createElement(template);
-    this.$scale.append(this.$cells);
-  }
-
-  get timeCellsTemplate() {
-    return `<div class="timescale-cells">${this.getTimeCells()}</div>`;
-  }
-
-  // Refactor
-  getTimeCells() {
-    let result = this.timeCells.reduce(
-      (template, { id, start, stop, type }, index) => {
-        let color = this.colors[type];
-        let x = this.calcTimeCellXPosition(start);
-        let width = this.calcTimeCellWidth(start, stop);
-        let className = this.isFloating(width)
-          ? 'timescale-cell float'
-          : 'timescale-cell';
-        let duration = util.secondsToTime(stop - start);
-
-        template += `
-          <div
-            class="${className}"
-            style="background-color: ${color}; left: ${x}%; width: ${width}%"
-            data-id="${id}">
-              <span>${duration}</span>
-          </div>
-        `;
-
-        return template;
-      },
-      ''
-    );
-
-    return result;
-  }
-
-  calcTimeCellWidth(start, stop) {
-    let timeCellMs = (stop - start) * 1000;
-    let result = (timeCellMs / (this.scaleHours * 3600 * 1000)) * 100;
-    return result.toFixed(2);
-  }
-
-  isFloating(cellWidth) {
-    let scaleWidth = this.$element.clientWidth * this.scaleRatio;
-    return (scaleWidth * cellWidth) / 100 < 45 ? true : false;
-  }
-
-  calcTimeCellXPosition(start) {
-    let startCellDate = new Date(start * 1000);
-    let cellStartMs = util.milliseconds(startCellDate);
-    let fullDayInMs = this.scaleHours * 3600 * 1000;
-    return ((cellStartMs * 100) / fullDayInMs).toFixed(2);
-  }
-
-  calcHourOnScale() {
-    let overflowInHours = this.cellOverflowChecking();
-    return this.hours + overflowInHours * this.hoursStep;
-  }
-
-  cellOverflowChecking() {
-    let max = 0;
-
-    this.timeCells.forEach(({ start, stop }) => {
-      let result = this.calcCellOverflow(stop);
-      if (result && max < result) {
-        max = result;
-      }
-    });
-
-    return Math.round(max);
-  }
-
-  calcCellOverflow(stop) {
-    let cellEndTimestamp = stop * 1000;
-    let nextDayTimestamp = this.from * 1000 + 3600 * this.hours * 1000;
-
-    if (cellEndTimestamp > nextDayTimestamp) {
-      let hours = (cellEndTimestamp - nextDayTimestamp) / 1000 / 60 / 60;
-      return hours;
-    }
-
-    return false;
   }
 
   registerObserverEvent(type, callback) {
     const handler = this.observer.subscribe(type, callback);
     this.subscriptions.push(handler);
   }
+
+  move({ left }) {
+    this.$scale.style.transform = `translateX(${left}%)`;
+  }
+
+  zoom({ width, left }) {
+    this.$scale.style.width = `${width}%`;
+    this.$scale.style.transform = `translateX(${left}%)`;
+  }
+
+  get scaleWidth() {
+    let width = 100 + ((this.hours - 24) / 24) * 100;
+    return Math.floor(width * 100) / 100;
+  }
+
+  //
 }
 
 export default connectToObserver(Timescale);
