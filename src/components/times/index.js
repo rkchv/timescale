@@ -81,12 +81,12 @@ class Times {
   initEventListeners() {
     this.element.addEventListener('mousedown', this.mousedown);
     this.element.addEventListener('dragstart', () => false);
-    document.addEventListener('mouseup', this.mouseup);
+    this.element.addEventListener('mouseup', this.mouseup);
   }
 
   mousedown(e) {
     this.moveFrom = e.clientX;
-    document.addEventListener('mousemove', this.mousemove);
+    this.element.addEventListener('mousemove', this.mousemove);
   }
 
   mousemove(e) {
@@ -110,7 +110,7 @@ class Times {
 
   mouseup() {
     this._x = this.moveTo;
-    document.removeEventListener('mousemove', this.mousemove);
+    this.element.removeEventListener('mousemove', this.mousemove);
   }
 
   get width() {
