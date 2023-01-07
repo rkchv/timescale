@@ -35,16 +35,16 @@ class Timescale {
 
   init() {
     this.render();
-    this.subElements = getSubElements(this.$element);
+    this.subElements = getSubElements(this.element);
     this.initComponents();
     this.renderComponents();
     this.initEventListeners();
-    this.root.append(this.$element);
+    this.root.append(this.element);
   }
 
   render() {
     let template = this.template;
-    this.$element = createElement(template);
+    this.element = createElement(template);
   }
 
   get template() {
@@ -84,12 +84,12 @@ class Timescale {
   }
 
   move({ value }) {
-    this.$element.style.transform = `translateX(${value}%)`;
+    this.element.style.transform = `translateX(${value}%)`;
   }
 
-  zoom({ width, left }) {
-    this.$element.style.width = `${width}%`;
-    this.$element.style.transform = `translateX(${left}%)`;
+  zoom({ width, transform }) {
+    this.element.style.width = `${width}%`;
+    this.element.style.transform = `translateX(${transform}%)`;
   }
 
   get scaleWidth() {
