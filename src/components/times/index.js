@@ -13,21 +13,22 @@ class Times {
   constructor({ hours = 24, step = 2 }, observer) {
     this.hours = hours;
     this.step = step;
+    this._x = 0;
     this.observer = observer;
+
     this.init();
   }
 
   init() {
     this.render();
-    // this.initEventListeners();
+    this.bindings();
+    this.initEventListeners();
   }
 
   render() {
     let template = this.template;
     this.element = createElement(template);
   }
-
-  initEventListeners() {}
 
   get template() {
     return `<div class="timescale-times">${this.timeLabels}</div>`;
@@ -46,8 +47,7 @@ class Times {
   }
 
   calcLeft(index) {
-    let x = (100 / this.count) * index;
-    return round(x);
+    return round((100 / this.count) * index);
   }
 
   calcTimeLabel(index) {
@@ -72,7 +72,63 @@ class Times {
     return this.hours / this.step;
   }
 
-  //
+  bindings() {
+    this.mousedown = this.mousedown.bind(this);
+    this.mouseup = this.mouseup.bind(this);
+    this.mousemove = this.mousemove.bind(this);
+  }
+
+  initEventListeners() {
+    this.element.addEventListener('mousedown', this.mousedown);
+    this.element.addEventListener('dragstart', () => false);
+    document.addEventListener('mouseup', this.mouseup);
+  }
+
+  mousedown(e) {
+    this.moveFrom = e.clientX;
+    document.addEventListener('mousemove', this.mousemove);
+  }
+
+  mousemove(e) {
+    let shift = ((e.clientX - this.moveFrom) / this.width) * 100;
+    let x = this._x + shift;
+
+    if (x !== this.moveTo && x <= 0 && x >= -this.limit) {
+      this.moveTo = x;
+    }
+
+    if (x <= -this.limit) {
+      this.moveTo = -this.limit;
+    }
+
+    if (x >= 0) {
+      this.moveTo = 0;
+    }
+
+    this.dispatchEvent(round(this.moveTo));
+  }
+
+  mouseup() {
+    this._x = this.moveTo;
+    document.removeEventListener('mousemove', this.mousemove);
+  }
+
+  get width() {
+    return this.element.getBoundingClientRect().width;
+  }
+
+  get rootWidth() {
+    let root = this.element.closest('.timescale');
+    return root.getBoundingClientRect().width;
+  }
+
+  get limit() {
+    return round(((this.width - this.rootWidth) / this.width) * 100);
+  }
+
+  dispatchEvent(value) {
+    this.observer.dispatchEvent({ type: 'move', payload: { value } });
+  }
 }
 
 export default connectToObserver(Times);

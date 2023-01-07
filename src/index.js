@@ -35,16 +35,16 @@ class Timescale {
 
   init() {
     this.render();
-    this.subElements = getSubElements(this.element);
+    this.subElements = getSubElements(this.$element);
     this.initComponents();
     this.renderComponents();
     this.initEventListeners();
-    this.root.append(this.element);
+    this.root.append(this.$element);
   }
 
   render() {
     let template = this.template;
-    this.element = createElement(template);
+    this.$element = createElement(template);
   }
 
   get template() {
@@ -71,9 +71,9 @@ class Timescale {
   }
 
   renderComponents() {
-    for (const componentName of Object.keys(this.components)) {
-      const root = this.subElements[componentName];
-      const { element } = this.components[componentName];
+    for (const component of Object.keys(this.components)) {
+      const root = this.subElements[component];
+      const { element } = this.components[component];
       root.append(element);
     }
   }
@@ -83,13 +83,13 @@ class Timescale {
     this.subscriptions.push(handler);
   }
 
-  move({ left }) {
-    this.$scale.style.transform = `translateX(${left}%)`;
+  move({ value }) {
+    this.$element.style.transform = `translateX(${value}%)`;
   }
 
   zoom({ width, left }) {
-    this.$scale.style.width = `${width}%`;
-    this.$scale.style.transform = `translateX(${left}%)`;
+    this.$element.style.width = `${width}%`;
+    this.$element.style.transform = `translateX(${left}%)`;
   }
 
   get scaleWidth() {
