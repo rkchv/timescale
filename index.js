@@ -15,6 +15,11 @@ import data from './api/mock';
 let plyrEl = document.getElementById('player');
 let player = new Plyr(plyrEl);
 
+player.on('timeupdate', event => {
+  // const instance = event.detail.plyr;
+  // console.log(instance.currentTime);
+});
+
 // Timescale
 
 let keyValue = Object.keys(cells)[0];
