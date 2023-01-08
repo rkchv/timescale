@@ -15,7 +15,7 @@ import Times from './components/times/';
 import Cursor from './components/cursor/';
 
 class Timescale {
-  components = {};
+  _components = {};
   subElements = [];
   subscriptions = new Map();
 
@@ -49,8 +49,10 @@ class Timescale {
   }
 
   get template() {
+    let width = 100 + ((this.hours - 24) / 24) * 100;
+
     return `
-      <div class="timescale-scale" style="width: ${this.scaleWidth}%">
+      <div class="timescale-scale" style="width: ${round(width)}%">
         <div data-element="cells"></div>
         <div data-element="ticks"></div>
         <div data-element="times"></div>
@@ -59,18 +61,13 @@ class Timescale {
     `;
   }
 
-  get scaleWidth() {
-    let width = 100 + ((this.hours - 24) / 24) * 100;
-    return Math.floor(width * 100) / 100;
-  }
-
   initComponents() {
     let cells = new Cells({ hours: this.hours, data: this.cells });
     let ticks = new Ticks({ hours: this.hours, step: this.step });
     let times = new Times({ hours: this.hours, step: this.step });
     let cursor = new Cursor();
 
-    this.components = { cells, ticks, times, cursor };
+    this._components = { cells, ticks, times, cursor };
   }
 
   initEventListeners() {
@@ -79,9 +76,9 @@ class Timescale {
   }
 
   renderComponents() {
-    for (const component of Object.keys(this.components)) {
+    for (const component of Object.keys(this._components)) {
       const root = this.subElements[component];
-      const { element } = this.components[component];
+      const { element } = this._components[component];
       root.append(element);
     }
   }
@@ -111,6 +108,10 @@ class Timescale {
   _removeObserverEvent(type, callback) {
     this.subscriptions.get(type)();
     this.subscriptions.delete(type);
+  }
+
+  get cursor() {
+    return this._components.cursor;
   }
 
   //
