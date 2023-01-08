@@ -5,7 +5,7 @@
 import connectToObserver from '../../core/observer/connect';
 
 import { createElement } from '../../core/dom';
-import { secondsToDuration, round } from '../../core/utils/';
+import { secToTime, round } from '../../core/utils/';
 
 class Times {
   element = null;
@@ -60,12 +60,12 @@ class Times {
     if (index / labelsPerDay > 1) {
       let rest = index % labelsPerDay;
       let seconds = rest * this.step * 3600;
-      return secondsToDuration(seconds).slice(0, -3);
+      return secToTime(seconds).slice(0, -3);
     }
 
     let seconds = index * this.step * 3600;
 
-    return secondsToDuration(seconds).slice(0, -3);
+    return secToTime(seconds).slice(0, -3);
   }
 
   get count() {
@@ -73,23 +73,23 @@ class Times {
   }
 
   bindings() {
-    this.mousedown = this.mousedown.bind(this);
-    this.mouseup = this.mouseup.bind(this);
-    this.mousemove = this.mousemove.bind(this);
+    this.onMouseDown = this.onMouseDown.bind(this);
+    this.onMouseUp = this.onMouseUp.bind(this);
+    this.onMouseMove = this.onMouseMove.bind(this);
   }
 
   initEventListeners() {
-    this.element.addEventListener('mousedown', this.mousedown);
+    this.element.addEventListener('mousedown', this.onMouseDown);
     this.element.addEventListener('dragstart', () => false);
-    this.element.addEventListener('mouseup', this.mouseup);
+    this.element.addEventListener('mouseup', this.onMouseUp);
   }
 
-  mousedown(e) {
+  onMouseDown(e) {
     this.moveFrom = e.clientX;
-    this.element.addEventListener('mousemove', this.mousemove);
+    this.element.addEventListener('mousemove', this.onMouseMove);
   }
 
-  mousemove(e) {
+  onMouseMove(e) {
     let shift = ((e.clientX - this.moveFrom) / this.width) * 100;
     let x = this._x + shift;
 
@@ -108,9 +108,9 @@ class Times {
     this.dispatchEvent(round(this.moveTo));
   }
 
-  mouseup() {
+  onMouseUp() {
     this._x = this.moveTo;
-    this.element.removeEventListener('mousemove', this.mousemove);
+    this.element.removeEventListener('mousemove', this.onMouseMove);
   }
 
   get width() {

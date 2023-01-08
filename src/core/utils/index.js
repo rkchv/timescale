@@ -22,7 +22,7 @@ export const round = (number) => {
   return Math.ceil(number * 100) / 100;
 }
 
-export const secondsToDuration = (timeInSeconds) => {
+export const secToTime = (timeInSeconds) => {
   let pad = function (num, size) {
     return ('000' + num).slice(size * -1);
   };

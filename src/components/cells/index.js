@@ -7,12 +7,7 @@ import connectToObserver from '../../core/observer/connect';
 import { colors } from '../../core/globals/';
 
 import { createElement } from '../../core/dom';
-import {
-  secondsToDuration,
-  getMsFromDate,
-  round,
-  getTranslate,
-} from '../../core/utils/';
+import { secToTime, getMsFromDate, round } from '../../core/utils/';
 
 class Cells {
   element = null;
@@ -22,14 +17,12 @@ class Cells {
     this.data = data;
     this.hours = hours;
     this.observer = observer;
-    this.map = new Map();
     this.init();
   }
 
   init() {
     this.render();
     this.initEventListeners();
-    // this.initOffset = this.offset;
   }
 
   render() {
@@ -46,7 +39,7 @@ class Cells {
       let left = this.calcLeft(start);
       let width = this.calcWidth(start, stop);
       let name = this.calcFloat(width);
-      let duration = secondsToDuration(stop - start);
+      let duration = secToTime(stop - start);
 
       template += `
         <div
@@ -86,7 +79,7 @@ class Cells {
 
   initEventListeners() {
     this.element.addEventListener('click', this.onClick.bind(this));
-    this.element.addEventListener('dblclick', this.onDoubleClick.bind(this));
+    this.element.addEventListener('dblclick', this.zoom.bind(this));
   }
 
   onClick(e) {
@@ -94,13 +87,10 @@ class Cells {
     this.timer = setTimeout(() => console.log('CELL CLICK'), 200);
   }
 
-  onDoubleClick(e) {
-    clearTimeout(this.timer);
-    this.zoom(e);
-  }
-
   zoom(e) {
-    let width = this.widthPercent;
+    clearTimeout(this.timer);
+
+    let width = this.nextWidth;
     let cursor = this.calcCursor(e.clientX);
     this._zoomLevel *= 2;
 
@@ -111,17 +101,13 @@ class Cells {
 
   calcCursor(x) {
     let cursor = ((x - this.elementOffset) / this.width) * 100;
-    return round(cursor);
+    return cursor;
   }
 
   get offset() {
-    if (this.map.get('offset')) {
-      return round(this.map.get('offset'));
-    }
-
-    let value = ((this.width - this.rootWidth) / this.width) * 100;
-    this.map.set('offset', value);
-    return round(value);
+    if (this.cacheOffset) return this.cacheOffset;
+    this.cacheOffset = ((this.width - this.rootWidth) / this.width) * 100;
+    return this.cacheOffset;
   }
 
   get elementOffset() {
@@ -136,15 +122,13 @@ class Cells {
     return this.element.getBoundingClientRect().width;
   }
 
-  get widthPercent() {
+  get nextWidth() {
     return round((this.width / this.rootWidth) * 100) * 2;
   }
 
   get $root() {
     return this.element.closest('.timescale');
   }
-
-  //
 }
 
 export default connectToObserver(Cells);
