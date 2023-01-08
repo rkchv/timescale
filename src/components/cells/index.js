@@ -123,7 +123,7 @@ class Cells {
   }
 
   get nextWidth() {
-    return round((this.width / this.rootWidth) * 100) * 2;
+    return (this.width / this.rootWidth) * 100 * 2;
   }
 
   get $root() {
