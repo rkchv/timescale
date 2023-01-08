@@ -17,11 +17,11 @@ import Cursor from './components/cursor/';
 class Timescale {
   components = {};
   subElements = [];
-  subscriptions = [];
+  subscriptions = new Map();
 
   constructor(
     root = null,
-    { cells = [], from, hours = 24, step = 2 },
+    { from, cells = [], hours = 24, step = 2 },
     observer
   ) {
     this.observer = observer;
@@ -59,6 +59,11 @@ class Timescale {
     `;
   }
 
+  get scaleWidth() {
+    let width = 100 + ((this.hours - 24) / 24) * 100;
+    return Math.floor(width * 100) / 100;
+  }
+
   initComponents() {
     let cells = new Cells({ hours: this.hours, data: this.cells });
     let ticks = new Ticks({ hours: this.hours, step: this.step });
@@ -69,8 +74,8 @@ class Timescale {
   }
 
   initEventListeners() {
-    this.registerObserverEvent('move', this.move.bind(this));
-    this.registerObserverEvent('zoom', this.zoom.bind(this));
+    this._registerObserverEvent('move', this.move.bind(this));
+    this._registerObserverEvent('zoom', this.zoom.bind(this));
   }
 
   renderComponents() {
@@ -79,11 +84,6 @@ class Timescale {
       const { element } = this.components[component];
       root.append(element);
     }
-  }
-
-  registerObserverEvent(type, callback) {
-    const handler = this.observer.subscribe(type, callback);
-    this.subscriptions.push(handler);
   }
 
   move({ value }) {
@@ -95,10 +95,25 @@ class Timescale {
     this.element.style.transform = `translateX(${round(shift)}%)`;
   }
 
-  get scaleWidth() {
-    let width = 100 + ((this.hours - 24) / 24) * 100;
-    return Math.floor(width * 100) / 100;
+  on(type, callback) {
+    this._registerObserverEvent(type, callback);
   }
+
+  off(type, callback) {
+    this._removeObserverEvent(type, callback);
+  }
+
+  _registerObserverEvent(type, callback) {
+    let handler = this.observer.subscribe(type, callback);
+    this.subscriptions.set(type, handler);
+  }
+
+  _removeObserverEvent(type, callback) {
+    this.subscriptions.get(type)();
+    this.subscriptions.delete(type);
+  }
+
+  //
 }
 
 export default connectToObserver(Timescale);

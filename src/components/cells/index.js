@@ -84,7 +84,9 @@ class Cells {
 
   onClick(e) {
     if (e.detail !== 1 || !e.target.dataset.id) return;
-    this.timer = setTimeout(() => console.log('CELL CLICK'), 200);
+    this.timer = setTimeout(() => {
+      this.observer.dispatchEvent({ type: 'cell.click', payload: e });
+    }, 200);
   }
 
   zoom(e) {
