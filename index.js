@@ -19,9 +19,8 @@ let plyrEl = document.getElementById('player');
 let player = new Plyr(plyrEl);
 
 // Timescale
-let timescaleEl = document.getElementById('timescale');
 
-let timescale = new Timescale(timescaleEl, {
+let timescale = new Timescale(document.getElementById('timescale'), {
   from: keyValue,
   cells: data[keyValue],
 });
@@ -31,13 +30,9 @@ timescale.on('cell.click', play);
 function play(e) {
   var id = e.target.dataset.id || null;
   if (!id) return;
-  var url = getUrl(data[keyValue], id);
+  var url = data[keyValue].filter(item => item.id === id)[0].url;
 
   player.pause();
   player.source = { type: 'video', sources: [{ src: url, type: 'video/mp4' }] };
   player.play();
-}
-
-function getUrl(data, id) {
-  return data.filter(item => item.id === id)[0].url;
 }
