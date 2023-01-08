@@ -18,62 +18,71 @@ import Timescale from './src/';
     1670803200: [
       {
         id: '0i75sxs678',
+        // 27:05
         start: 1670811600, // Mon Dec 12 2022 02:20:00 GMT+0000,
-        stop: 1670814900, // Mon Dec 12 2022 03:15:00 GMT+0000,
+        stop: 1670813225, // Mon Dec 12 2022 02:47:05 GMT+0000,
         type: 'file-attack',
-        url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671550848/coverr-coding-developer-7198-1080p_e7fpcd.mp4',
+        url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187424/video-1_cbv1i4.mp4',
       },
       {
         id: '92jjhsy657',
+        // 45:23
         start: 1670828400, // Mon Dec 12 2022 07:00:00 GMT+0000,
-        stop: 1670830690, // Mon Dec 12 2022 07:38:10 GMT+0000,
+        stop: 1670831123, // Mon Dec 12 2022 07:45:23 GMT+0000,
         type: 'process-attack',
-        url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671552855/coverr-pencil-writing-and-erasing-7073-1080p_wik7ea.mp4',
+        url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187482/video-2_wkdr8u.mp4',
       },
       {
         id: 'js892jdbds',
+        // 24:19
         start: 1670832000, // Mon Dec 12 2022 08:00:00 GMT+0000,
-        stop: 1670836810, // Mon Dec 12 2022 09:20:10 GMT+0000,
+        stop: 1670833459, // Mon Dec 12 2022 08:24:19 GMT+0000,
         type: 'registry-attack',
-        url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671552883/coverr-pov-car-wash-9339-1080p_tccrc0.mp4',
+        url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187415/video-3_nwjv54.mp4',
       },
       {
+        // 35:37
         id: '0x9hhio54s',
         start: 1670842800, // Mon Dec 12 2022 11:00:00 GMT+0000,
-        stop: 1670851399, // Mon Dec 12 2022 13:23:19 GMT+0000,
+        stop: 1670844937, // Mon Dec 12 2022 11:35:37 GMT+0000,
         type: 'network-attack',
-        url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671553283/coverr-tent-on-a-mountain-top-8476-1080p_qju3le.mp4',
+        url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187444/video-4_we7oqg.mp4',
       },
       {
         id: '7gs52b6fgs',
+        // 12:05
         start: 1670853600, // Mon Dec 12 2022 14:00:00 GMT+0000,
-        stop: 1670854200, // Mon Dec 12 2022 14:10:00 GMT+0000,
+        stop: 1670854325, // Mon Dec 12 2022 14:12:05 GMT+0000,
         type: 'suspicious-activity',
-        url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671553478/coverr-cat-eating-grass-1749-1080p_jmg2se.mp4',
+        url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187300/video-5_ckkjaf.mp4',
       },
       {
         id: '1hsyso85s7',
+        // 40:06
         start: 1670857200, // Mon Dec 12 2022 15:00:00 GMT+0000,
-        stop: 1670860800, // Mon Dec 12 2022 16:00:00 GMT+0000,
+        stop: 1670859606, // Mon Dec 12 2022 15:40:06 GMT+0000,
         type: 'network-attack',
-        url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671553504/coverr-workers-typing-and-closing-their-laptops-4953-1080p_r9ttkj.mp4',
+        url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187689/video-6_rikpwr.mp4',
       },
       {
         id: '1hsyzo85a1',
-        start: 1670882400, // Mon Dec 12 2022 22:00:00 GMT+0000
-        stop: 1670892600, // Tue Dec 13 2022 00:50:00 GMT+0000
+        // 50:44
+        start: 1670887800, // Mon Dec 12 2022 23:30:00 GMT+0000
+        stop: 1670890844, // Tue Dec 13 2022 00:20:44 GMT+0000
         type: 'registry-attack',
-        url: 'https://res.cloudinary.com/dpelvtt5i/video/upload/v1671553504/coverr-workers-typing-and-closing-their-laptops-4953-1080p_r9ttkj.mp4',
+        url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187986/video-7_tm2mc1.mp4,
       },
     ],
   };
 
   let element = document.getElementById('timescale');
+  let timescale = null;
 
   for (var property in cells) {
-    new Timescale(element, {
+    timescale = new Timescale(element, {
       from: property,
       cells: cells[property],
     });
   }
+
 })();

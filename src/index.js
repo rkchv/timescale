@@ -12,6 +12,7 @@ import { calcHours, round } from './core/utils/';
 import Cells from './components/cells/';
 import Ticks from './components/ticks/';
 import Times from './components/times/';
+import Cursor from './components/cursor/';
 
 class Timescale {
   components = {};
@@ -53,6 +54,7 @@ class Timescale {
         <div data-element="cells"></div>
         <div data-element="ticks"></div>
         <div data-element="times"></div>
+        <div data-element="cursor"></div>
       </div>
     `;
   }
@@ -61,8 +63,9 @@ class Timescale {
     let cells = new Cells({ hours: this.hours, data: this.cells });
     let ticks = new Ticks({ hours: this.hours, step: this.step });
     let times = new Times({ hours: this.hours, step: this.step });
+    let cursor = new Cursor();
 
-    this.components = { cells, ticks, times };
+    this.components = { cells, ticks, times, cursor };
   }
 
   initEventListeners() {
@@ -96,8 +99,6 @@ class Timescale {
     let width = 100 + ((this.hours - 24) / 24) * 100;
     return Math.floor(width * 100) / 100;
   }
-
-  //
 }
 
 export default connectToObserver(Timescale);

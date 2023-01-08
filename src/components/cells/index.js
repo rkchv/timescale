@@ -31,15 +31,15 @@ class Cells {
   }
 
   get template() {
-    return `<div class="timescale-cells">${this.getCells()}</div>`;
+    return `<div class="timescale-cells">${this.cells}</div>`;
   }
 
-  getCells() {
+  get cells() {
     return this.data.reduce((template, { id, start, stop, type }, index) => {
       let left = this.calcLeft(start);
       let width = this.calcWidth(start, stop);
       let name = this.calcFloat(width);
-      let duration = secToTime(stop - start);
+      let time = secToTime(stop - start);
 
       template += `
         <div
@@ -47,7 +47,7 @@ class Cells {
           style="background-color: ${colors[type]}; left: ${left}%; width: ${width}%"
           data-id="${id}"
         >
-          <span>${duration}</span>
+          <span>${time}</span>
         </div>
       `;
 
@@ -91,15 +91,15 @@ class Cells {
     clearTimeout(this.timer);
 
     let width = this.nextWidth;
-    let cursor = this.calcCursor(e.clientX);
+    let position = this.calcPosition(e.clientX);
     this._zoomLevel *= 2;
 
-    let shift = -cursor + (100 - this.offset) / this._zoomLevel / 2;
+    let shift = -position + (100 - this.offset) / this._zoomLevel / 2;
 
     this.observer.dispatchEvent({ type: 'zoom', payload: { width, shift } });
   }
 
-  calcCursor(x) {
+  calcPosition(x) {
     let cursor = ((x - this.elementOffset) / this.width) * 100;
     return cursor;
   }

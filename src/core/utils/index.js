@@ -63,26 +63,23 @@ export const getTranslate = (item) => {
 }
 
 export const calcHours = (cells, from, hours, step) => {
-  let maxOffset = 0;
+  let offset = 0;
 
-  function calcMaxOffset(stop) {
+  function calcOffset(stop) {
     let cellEndTimestamp = stop * 1000;
     let nextDayTimestamp = from * 1000 + hours * 3600 * 1000;
-
-    if (cellEndTimestamp > nextDayTimestamp) {
-      let hours = (cellEndTimestamp - nextDayTimestamp) / 1000 / 60 / 60;
-      return hours;
-    }
+    return (cellEndTimestamp - nextDayTimestamp) / 1000 / 60 / 60;
   }
 
   cells.forEach(({ start, stop }) => {
 
-    let result = calcMaxOffset(stop);
+    let result = calcOffset(stop);
+    // console.log(result);
 
-    if (result && maxOffset < result) {
+    if (result > 0 && offset < result) {
       maxOffset = result;
     }
   });
 
-  return hours + Math.round(maxOffset) * step;
+  return hours + Math.ceil(maxOffset) * step;
 }
