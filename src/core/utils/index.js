@@ -74,12 +74,11 @@ export const calcHours = (cells, from, hours, step) => {
   cells.forEach(({ start, stop }) => {
 
     let result = calcOffset(stop);
-    // console.log(result);
 
     if (result > 0 && offset < result) {
-      maxOffset = result;
+      offset = result;
     }
   });
 
-  return hours + Math.ceil(maxOffset) * step;
+  return hours + Math.ceil(offset) * step;
 }
