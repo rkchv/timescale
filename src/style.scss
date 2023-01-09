@@ -9,6 +9,7 @@ body {
 }
 
 .timescale {
+  $this: &;
   position: relative;
   display: block;
   width: 100%;
@@ -21,7 +22,6 @@ body {
     min-width: 100%;
     height: 140px;
     border-radius: 5px;
-    // transition: width .25s;
   }
 
 
@@ -131,37 +131,100 @@ body {
     position: absolute;
     left: 0;
     top: 7px;
-    display: inline-block;
     height: 36px;
-    background-color: darkcyan;
     border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: 'Noto Sans';
     overflow: hidden;
-    white-space: nowrap;
-    opacity: 0.65;
+    cursor: pointer;
 
-    span {
+    &-indicator {
+      position: absolute;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      display: block;
+      height: 100%;
+      width: 0;
+      pointer-events: none;
+
+      #{$this}-cell[data-file-attack] & {
+        background-color: #e9847d;
+      }
+
+      #{$this}-cell[data-process-attack] & {
+        background-color: #5baeef;
+      }
+
+      #{$this}-cell[data-registry-attack] & {
+        background-color: #b17bb9;
+      }
+
+      #{$this}-cell[data-network-attack] & {
+        background-color: #8ec519;
+      }
+
+      #{$this}-cell[data-suspicious-activity] & {
+        background-color: #4bc580;
+      }
+
+    }
+
+    &-front {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 2;
+      height: 100%;
+      width: 100%;
+      pointer-events: none;
+      opacity: 0.5;
+
+      #{$this}-cell[data-file-attack] & {
+        background-color: #e9847d;
+      }
+
+      #{$this}-cell[data-process-attack] & {
+        background-color: #5baeef;
+      }
+
+      #{$this}-cell[data-registry-attack] & {
+        background-color: #b17bb9;
+      }
+
+      #{$this}-cell[data-network-attack] & {
+        background-color: #8ec519;
+      }
+
+      #{$this}-cell[data-suspicious-activity] & {
+        background-color: #4bc580;
+      }
+
+    }
+
+    &-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'Noto Sans';
+      white-space: nowrap;
       pointer-events: none;
       user-select: none;
     }
 
-    &.float {
-      overflow: initial;
+    // &.float {
+    //   overflow: initial;
 
-      span {
-        position: absolute;
-        top: -30px;
-        color: #000;
-      }
+    //   span {
+    //     position: absolute;
+    //     top: -30px;
+    //     color: #000;
+    //   }
 
-    }
+    // }
 
   }
 
@@ -191,8 +254,8 @@ body {
     top: 0;
     left: 0;
     height: 100%;
-    width: 1px;
-    background-color: green;
+    width: 2px;
+    background-color: #191919;
     opacity: 0;
   }
 

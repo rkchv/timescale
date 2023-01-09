@@ -4,14 +4,12 @@
 
 import connectToObserver from '../../core/observer/connect';
 
-import { colors } from '../../core/globals/';
-
 import { createElement } from '../../core/dom';
 import { secToTime, getMsFromDate, round } from '../../core/utils/';
 
 class Cells {
   element = null;
-  _zoomLevel = 1;
+  zoomLevel = 1;
 
   constructor({ data = [], hours = 24 }, observer) {
     this.data = data;
@@ -22,6 +20,7 @@ class Cells {
 
   init() {
     this.render();
+    this.appendIndicator(this.element.firstElementChild);
     this.initEventListeners();
   }
 
@@ -37,11 +36,6 @@ class Cells {
   get cells() {
     return this.data.reduce((template, { id, start, stop, type }, index) => {
       let left = this.calcLeft(start);
-
-      if (!index) {
-        this.leftCellPos = left;
-      }
-
       let width = this.calcWidth(start, stop);
       let name = this.calcFloat(width);
       let time = secToTime(stop - start);
@@ -49,15 +43,36 @@ class Cells {
       template += `
         <div
           class="${name}"
-          style="background-color: ${colors[type]}; left: ${left}%; width: ${width}%"
+          style="left: ${left}%; width: ${width}%"
           data-id="${id}"
+          data-${type}
         >
-          <span>${time}</span>
+          <span class="timescale-cell-front"></span>
+          <span class="timescale-cell-text">${time}</span>
         </div>
       `;
 
+      if (!index) {
+        this.leftCellPos = left;
+      }
+
       return template;
     }, '');
+  }
+
+  appendIndicator(element) {
+    let template = `<div class="timescale-cell-indicator"></div>`;
+    if (this.indicator) {
+      this.indicator.remove();
+      this.indicator = null;
+    }
+    this.indicator = createElement(template);
+    element.append(this.indicator);
+  }
+
+  updateIndicator(to) {
+    let width = this.indicator.parentNode.style.width.slice(0, -1);
+    this.indicator.style.width = `${(to / width) * 100}%`;
   }
 
   calcWidth(start, stop) {
@@ -89,11 +104,13 @@ class Cells {
 
   onClick(e) {
     if (e.detail !== 1 || !e.target.dataset.id) return;
-    let position = parseFloat(e.target.style.left.slice(0, -1));
 
     this.timer = setTimeout(() => {
+      console.log('click');
+      let to = parseFloat(e.target.style.left.slice(0, -1));
+      this.appendIndicator(e.target);
       this.observer.dispatchEvent({ type: 'cell.click', payload: e });
-      this.observer.dispatchEvent({ type: 'cursor', payload: position });
+      this.observer.dispatchEvent({ type: 'cursor', payload: to });
     }, 200);
   }
 
@@ -102,11 +119,14 @@ class Cells {
 
     let width = this.nextWidth;
     let cursor = this.calcCursorX(e.clientX);
-    this._zoomLevel *= 4;
+    this.zoomLevel *= 2;
 
-    let to = -cursor + (100 - this.offset) / this._zoomLevel / 2;
+    let tranlateTo = -cursor + (100 - this.offset) / this.zoomLevel / 2;
 
-    this.observer.dispatchEvent({ type: 'zoom', payload: { width, to } });
+    this.observer.dispatchEvent({
+      type: 'zoom',
+      payload: { width, tranlateTo },
+    });
   }
 
   calcCursorX(x) {
@@ -133,7 +153,7 @@ class Cells {
   }
 
   get nextWidth() {
-    return (this.width / this.rootWidth) * 100 * 4;
+    return (this.width / this.rootWidth) * 100 * 2;
   }
 
   get $root() {

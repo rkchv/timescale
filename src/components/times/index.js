@@ -85,31 +85,31 @@ class Times {
   }
 
   onMouseDown(e) {
-    this.moveFrom = e.clientX;
+    this.translateFrom = e.clientX;
     this.element.addEventListener('mousemove', this.onMouseMove);
   }
 
   onMouseMove(e) {
-    let shift = ((e.clientX - this.moveFrom) / this.width) * 100;
+    let shift = ((e.clientX - this.translateFrom) / this.width) * 100;
     let x = this._x + shift;
 
-    if (x !== this.moveTo && x <= 0 && x >= -this.limit) {
-      this.moveTo = x;
+    if (x !== this.tranlateTo && x <= 0 && x >= -this.limit) {
+      this.tranlateTo = x;
     }
 
     if (x <= -this.limit) {
-      this.moveTo = -this.limit;
+      this.tranlateTo = -this.limit;
     }
 
     if (x >= 0) {
-      this.moveTo = 0;
+      this.tranlateTo = 0;
     }
 
-    this.dispatchEvent(this.moveTo);
+    this.dispatchEvent(this.tranlateTo);
   }
 
   onMouseUp() {
-    this._x = this.moveTo;
+    this._x = this.tranlateTo;
     this.element.removeEventListener('mousemove', this.onMouseMove);
   }
 

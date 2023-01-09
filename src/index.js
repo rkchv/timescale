@@ -102,13 +102,13 @@ class Timescale {
     this.subscriptions.delete(type);
   }
 
-  move(to) {
-    this.element.style.transform = `translateX(${round(to)}%)`;
+  move(tranlateTo) {
+    this.element.style.transform = `translateX(${round(tranlateTo)}%)`;
   }
 
-  zoom({ width, to }) {
+  zoom({ width, tranlateTo }) {
     this.element.style.width = `${round(width)}%`;
-    this.element.style.transform = `translateX(${round(to)}%)`;
+    this.element.style.transform = `translateX(${round(tranlateTo)}%)`;
   }
 
   setCursor(to) {
@@ -118,6 +118,7 @@ class Timescale {
   moveCursor(time) {
     let to = round((time / (this.hours * 3600)) * 100);
     this._components.cursor.move(to);
+    this._components.cells.updateIndicator(to);
   }
 }
 
