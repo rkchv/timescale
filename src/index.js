@@ -65,7 +65,7 @@ class Timescale {
     let cells = new Cells({ hours: this.hours, data: this.cells });
     let ticks = new Ticks({ hours: this.hours, step: this.step });
     let times = new Times({ hours: this.hours, step: this.step });
-    let cursor = new Cursor({ position: cells.first });
+    let cursor = new Cursor({ position: cells.firstElemPos });
 
     this._components = { cells, ticks, times, cursor };
   }

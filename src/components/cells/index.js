@@ -39,7 +39,7 @@ class Cells {
       let left = this.calcLeft(start);
 
       if (!index) {
-        this.leftBorder = left;
+        this.leftCellPos = left;
       }
 
       let width = this.calcWidth(start, stop);
@@ -140,8 +140,8 @@ class Cells {
     return this.element.closest('.timescale');
   }
 
-  get first() {
-    return this.leftBorder;
+  get firstElemPos() {
+    return this.leftCellPos;
   }
 }
 
