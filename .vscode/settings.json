@@ -42,10 +42,10 @@
   * Typography
   **/
 
-  "editor.fontFamily": "'Operator Mono', 'JetBrains Mono', 'FiraCode-Retina', 'FiraCode-Retina', 'Menlo', 'Dank Mono', 'Monaco', 'Courier New', monospace",
+  "editor.fontFamily": "'JetBrains Mono', 'Operator Mono', 'FiraCode-Retina', 'Menlo', 'Dank Mono', 'Monaco', 'Courier New', monospace",
   "editor.fontLigatures": true,
   "editor.fontWeight": 400,
-  "editor.fontSize": 16,
+  "editor.fontSize": 15,
   "editor.lineHeight": 38,
   "editor.suggestFontSize": 15,
   "editor.suggestLineHeight": 28,

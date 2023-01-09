@@ -82,3 +82,19 @@ export const calcHours = (cells, from, hours, step) => {
 
   return hours + Math.ceil(offset) * step;
 }
+
+export const debounce = (fn, delay = 0) => {
+  let timerId;
+
+  return function (...args) {
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+
+    timerId = setTimeout(() => {
+      fn.apply(this, args);
+
+      timerId = null;
+    }, delay);
+  };
+};

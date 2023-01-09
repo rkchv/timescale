@@ -105,7 +105,7 @@ class Times {
       this.moveTo = 0;
     }
 
-    this.dispatchEvent(round(this.moveTo));
+    this.dispatchEvent(this.moveTo);
   }
 
   onMouseUp() {
@@ -126,8 +126,8 @@ class Times {
     return round(((this.width - this.rootWidth) / this.width) * 100);
   }
 
-  dispatchEvent(value) {
-    this.observer.dispatchEvent({ type: 'move', payload: { value } });
+  dispatchEvent(position) {
+    this.observer.dispatchEvent({ type: 'move', payload: position });
   }
 }
 

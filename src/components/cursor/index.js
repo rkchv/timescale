@@ -4,13 +4,15 @@
 
 import connectToObserver from '../../core/observer/connect';
 
-import { createElement } from '../../core/dom';
-// import { round } from '../../core/utils/';
+import { createElement } from '../../core/dom/';
+import { round } from '../../core/utils/';
 
 class Cursor {
-  element = null;
+  element;
 
-  constructor({}, observer) {
+  constructor({ hours = 24, position = 0 }, observer) {
+    this.hours = hours;
+    this.position = position;
     this.init();
   }
 
@@ -25,6 +27,17 @@ class Cursor {
 
   get template() {
     return `<div class="timescale-cursor"></div>`;
+  }
+
+  set(position) {
+    this.position = position;
+    this.element.style.opacity = 1;
+    this.element.style.left = `${this.position}%`;
+  }
+
+  move(shift) {
+    this.element.style.left = `${this.position + shift}%`;
+    this.element.style.opacity = 1;
   }
 }
 

@@ -37,6 +37,11 @@ class Cells {
   get cells() {
     return this.data.reduce((template, { id, start, stop, type }, index) => {
       let left = this.calcLeft(start);
+
+      if (!index) {
+        this.leftBorder = left;
+      }
+
       let width = this.calcWidth(start, stop);
       let name = this.calcFloat(width);
       let time = secToTime(stop - start);
@@ -84,8 +89,11 @@ class Cells {
 
   onClick(e) {
     if (e.detail !== 1 || !e.target.dataset.id) return;
+    let position = parseFloat(e.target.style.left.slice(0, -1));
+
     this.timer = setTimeout(() => {
       this.observer.dispatchEvent({ type: 'cell.click', payload: e });
+      this.observer.dispatchEvent({ type: 'cursor', payload: position });
     }, 200);
   }
 
@@ -93,15 +101,15 @@ class Cells {
     clearTimeout(this.timer);
 
     let width = this.nextWidth;
-    let position = this.calcPosition(e.clientX);
-    this._zoomLevel *= 2;
+    let cursor = this.calcCursorX(e.clientX);
+    this._zoomLevel *= 4;
 
-    let shift = -position + (100 - this.offset) / this._zoomLevel / 2;
+    let to = -cursor + (100 - this.offset) / this._zoomLevel / 2;
 
-    this.observer.dispatchEvent({ type: 'zoom', payload: { width, shift } });
+    this.observer.dispatchEvent({ type: 'zoom', payload: { width, to } });
   }
 
-  calcPosition(x) {
+  calcCursorX(x) {
     let cursor = ((x - this.elementOffset) / this.width) * 100;
     return cursor;
   }
@@ -125,11 +133,15 @@ class Cells {
   }
 
   get nextWidth() {
-    return (this.width / this.rootWidth) * 100 * 2;
+    return (this.width / this.rootWidth) * 100 * 4;
   }
 
   get $root() {
     return this.element.closest('.timescale');
+  }
+
+  get first() {
+    return this.leftBorder;
   }
 }
 

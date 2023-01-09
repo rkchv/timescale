@@ -12,12 +12,11 @@ import data from './api/mock';
 // -------------------------------
 
 // Player
-let plyrEl = document.getElementById('player');
-let player = new Plyr(plyrEl);
+let player = new Plyr(document.getElementById('player'));
 
 player.on('timeupdate', event => {
-  // const instance = event.detail.plyr;
-  // console.log(instance.currentTime);
+  const instance = event.detail.plyr;
+  timescale.moveCursor(instance.currentTime);
 });
 
 // Timescale
@@ -31,17 +30,12 @@ let timescale = new Timescale(document.getElementById('timescale'), {
 
 timescale.on('cell.click', play);
 
-// console.log(timescale.cursor);
-
 function play(e) {
   var id = e.target.dataset.id || null;
   if (!id) return;
   var url = data[keyValue].filter(item => item.id === id)[0].url;
 
   player.pause();
-  player.source = {
-    type: 'video',
-    sources: [{ src: url, type: 'video/mp4', size: 720 }],
-  };
+  player.source = { type: 'video', sources: [{ src: url, type: 'video/mp4' }] };
   player.play();
 }

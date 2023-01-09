@@ -7,7 +7,7 @@ import './style.scss';
 import connectToObserver from './core/observer/connect';
 
 import { createElement, getSubElements } from './core/dom/';
-import { calcHours, round } from './core/utils/';
+import { calcHours, round, debounce } from './core/utils/';
 
 import Cells from './components/cells/';
 import Ticks from './components/ticks/';
@@ -65,7 +65,7 @@ class Timescale {
     let cells = new Cells({ hours: this.hours, data: this.cells });
     let ticks = new Ticks({ hours: this.hours, step: this.step });
     let times = new Times({ hours: this.hours, step: this.step });
-    let cursor = new Cursor();
+    let cursor = new Cursor({ position: cells.first });
 
     this._components = { cells, ticks, times, cursor };
   }
@@ -73,6 +73,7 @@ class Timescale {
   initEventListeners() {
     this._registerObserverEvent('move', this.move.bind(this));
     this._registerObserverEvent('zoom', this.zoom.bind(this));
+    this._registerObserverEvent('cursor', this.setCursor.bind(this));
   }
 
   renderComponents() {
@@ -81,15 +82,6 @@ class Timescale {
       const { element } = this._components[component];
       root.append(element);
     }
-  }
-
-  move({ value }) {
-    this.element.style.transform = `translateX(${value}%)`;
-  }
-
-  zoom({ width, shift }) {
-    this.element.style.width = `${round(width)}%`;
-    this.element.style.transform = `translateX(${round(shift)}%)`;
   }
 
   on(type, callback) {
@@ -110,11 +102,23 @@ class Timescale {
     this.subscriptions.delete(type);
   }
 
-  get cursor() {
-    return this._components.cursor;
+  move(to) {
+    this.element.style.transform = `translateX(${round(to)}%)`;
   }
 
-  //
+  zoom({ width, to }) {
+    this.element.style.width = `${round(width)}%`;
+    this.element.style.transform = `translateX(${round(to)}%)`;
+  }
+
+  setCursor(to) {
+    this._components.cursor.set(to);
+  }
+
+  moveCursor(time) {
+    let to = round((time / (this.hours * 3600)) * 100);
+    this._components.cursor.move(to);
+  }
 }
 
 export default connectToObserver(Timescale);
