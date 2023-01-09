@@ -72,7 +72,7 @@ class Cells {
 
   updateIndicator(to) {
     let width = this.indicator.parentNode.style.width.slice(0, -1);
-    this.indicator.style.width = `${(to / width) * 100}%`;
+    this.indicator.style.width = `${round((to / width) * 100)}%`;
   }
 
   calcWidth(start, stop) {
@@ -106,7 +106,6 @@ class Cells {
     if (e.detail !== 1 || !e.target.dataset.id) return;
 
     this.timer = setTimeout(() => {
-      console.log('click');
       let to = parseFloat(e.target.style.left.slice(0, -1));
       this.appendIndicator(e.target);
       this.observer.dispatchEvent({ type: 'cell.click', payload: e });
@@ -121,7 +120,20 @@ class Cells {
     let cursor = this.calcCursorX(e.clientX);
     this.zoomLevel *= 2;
 
-    let tranlateTo = -cursor + (100 - this.offset) / this.zoomLevel / 2;
+    let maxOffset =
+      -((this.width * 2 - this.rootWidth) / (this.width * 2)) * 100;
+
+    let shift = -cursor + (100 - this.offset) / this.zoomLevel / 2;
+
+    let tranlateTo;
+
+    if (shift >= 0) {
+      tranlateTo = 0;
+    } else if (shift < maxOffset) {
+      tranlateTo = maxOffset;
+    } else {
+      tranlateTo = shift;
+    }
 
     this.observer.dispatchEvent({
       type: 'zoom',
@@ -133,6 +145,10 @@ class Cells {
     let cursor = ((x - this.elementOffset) / this.width) * 100;
     return cursor;
   }
+
+  // get dynamicOffset() {
+  //   return ((this.width - this.rootWidth) / this.width) * 100;
+  // }
 
   get offset() {
     if (this.cacheOffset) return this.cacheOffset;

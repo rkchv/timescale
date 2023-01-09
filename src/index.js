@@ -116,7 +116,7 @@ class Timescale {
   }
 
   moveCursor(time) {
-    let to = round((time / (this.hours * 3600)) * 100);
+    let to = Math.floor((time / (this.hours * 3600)) * 1000000) / 10000;
     this._components.cursor.move(to);
     this._components.cells.updateIndicator(to);
   }

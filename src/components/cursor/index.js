@@ -36,8 +36,9 @@ class Cursor {
   }
 
   move(shift) {
-    this.element.style.left = `${this.position + shift}%`;
+    console.log(shift);
     this.element.style.opacity = 1;
+    this.element.style.left = `${this.position + shift}%`;
   }
 }
 
