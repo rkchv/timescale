@@ -573,7 +573,7 @@ function play(e) {
 } // updating
  // timescale.update(data2);
 
-},{"plyr":"aqcBy","plyr/dist/plyr.css":"cTDKJ","./src/":"8lqZg","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./api/mock":"6drfj"}],"aqcBy":[function(require,module,exports) {
+},{"plyr":"aqcBy","plyr/dist/plyr.css":"cTDKJ","./src/":"8lqZg","./api/mock":"6drfj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aqcBy":[function(require,module,exports) {
 var global = arguments[3];
 "object" == typeof navigator && function(e, t) {
     module.exports = t();
@@ -4149,7 +4149,7 @@ class Timescale {
 }
 exports.default = (0, _connectDefault.default)(Timescale);
 
-},{"./style.scss":"81Z0h","./core/observer/connect":"kTrCQ","./core/dom/":"i2HtO","./core/utils/":"4X1EK","./components/cells/":"cDUWU","./components/ticks/":"yHQ7P","./components/times/":"i7UMd","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./components/cursor/":"17Ia2","./components/reset/":"2JEHr"}],"81Z0h":[function() {},{}],"kTrCQ":[function(require,module,exports) {
+},{"./style.scss":"81Z0h","./core/observer/connect":"kTrCQ","./core/dom/":"i2HtO","./core/utils/":"4X1EK","./components/cells/":"cDUWU","./components/ticks/":"yHQ7P","./components/times/":"i7UMd","./components/cursor/":"17Ia2","./components/reset/":"2JEHr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"81Z0h":[function() {},{}],"kTrCQ":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _indexJs = require("./index.js");
@@ -4738,7 +4738,7 @@ class Cursor {
 }
 exports.default = Cursor;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../../core/dom/":"i2HtO","../../core/utils/":"4X1EK"}],"2JEHr":[function(require,module,exports) {
+},{"../../core/dom/":"i2HtO","../../core/utils/":"4X1EK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2JEHr":[function(require,module,exports) {
 /**
  * @format
  */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
