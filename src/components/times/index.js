@@ -5,7 +5,7 @@
 import connectToObserver from '../../core/observer/connect';
 
 import { createElement } from '../../core/dom';
-import { secToTime, round } from '../../core/utils/';
+import { secToTime, round, getTranslate } from '../../core/utils/';
 
 class Times {
   element = null;
@@ -13,7 +13,6 @@ class Times {
   constructor({ hours = 24, step = 2 }, observer) {
     this.hours = hours;
     this.step = step;
-    this._x = 0;
     this.observer = observer;
 
     this.init();
@@ -80,18 +79,19 @@ class Times {
 
   initEventListeners() {
     this.element.addEventListener('mousedown', this.onMouseDown);
-    this.element.addEventListener('dragstart', () => false);
     this.element.addEventListener('mouseup', this.onMouseUp);
+    this.element.addEventListener('dragstart', () => false);
   }
 
   onMouseDown(e) {
+    this.x = (getTranslate(this.scale)[0] / this.width) * 100;
     this.translateFrom = e.clientX;
     this.element.addEventListener('mousemove', this.onMouseMove);
   }
 
   onMouseMove(e) {
     let shift = ((e.clientX - this.translateFrom) / this.width) * 100;
-    let x = this._x + shift;
+    let x = this.x + shift;
 
     if (x !== this.tranlateTo && x <= 0 && x >= -this.limit) {
       this.tranlateTo = x;
@@ -105,29 +105,32 @@ class Times {
       this.tranlateTo = 0;
     }
 
-    this.dispatchEvent(this.tranlateTo);
+    this.observer.dispatchEvent({ type: 'move', payload: this.tranlateTo });
   }
 
   onMouseUp() {
-    this._x = this.tranlateTo;
+    this.x = this.tranlateTo;
     this.element.removeEventListener('mousemove', this.onMouseMove);
   }
 
   get width() {
-    return this.element.getBoundingClientRect().width;
+    return this.scale.getBoundingClientRect().width;
   }
 
   get rootWidth() {
-    let root = this.element.closest('.timescale');
-    return root.getBoundingClientRect().width;
+    return this.root.getBoundingClientRect().width;
+  }
+
+  get root() {
+    return this.element.closest('.timescale');
+  }
+
+  get scale() {
+    return this.element.closest('.timescale-scale');
   }
 
   get limit() {
-    return round(((this.width - this.rootWidth) / this.width) * 100);
-  }
-
-  dispatchEvent(position) {
-    this.observer.dispatchEvent({ type: 'move', payload: position });
+    return ((this.width - this.rootWidth) / this.width) * 100;
   }
 }
 

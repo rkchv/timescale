@@ -15,7 +15,7 @@ Destroy
 Round with params
 Reset button
 $
-
+Удалить неиспользуемые геттеры
 
 Потом добавить
 
