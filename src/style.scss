@@ -15,6 +15,10 @@ body {
   width: 100%;
   overflow: hidden;
 
+  &-wrapper {
+    width: 100%;
+  }
+
   &-scale {
     position: relative;
     z-index: 1;
@@ -271,6 +275,25 @@ body {
   &-controls {
     margin-top: 10px;
     text-align: center;
+  }
+
+  [data-element="reset"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+
+    button.button[type="button"] {
+      cursor: pointer;
+
+      &.disabled {
+        pointer-events: none;
+        opacity: 0;
+      }
+
+    }
+
+
   }
 
 }

@@ -12,7 +12,6 @@ Private variables
 Private event catchnig
 Destroy
 Round with params (Math.pow(12, 2))
-Reset button
 Удалить неиспользуемые геттеры и сделать консистенси в названиях ($)
 Safari, Mozilla, Edge проверить
 

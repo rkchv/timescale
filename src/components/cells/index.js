@@ -76,6 +76,10 @@ class Cells {
     this.addIndicator(this.element.firstElementChild);
   }
 
+  zoomReset() {
+    this.zoomLevel = 1;
+  }
+
   addIndicator(element) {
     let template = `<div class="timescale-cell-indicator"></div>`;
     if (this.indicator) {

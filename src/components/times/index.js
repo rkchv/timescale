@@ -55,6 +55,11 @@ class Times {
     this.element.innerHTML = this.timeLabels;
   }
 
+  zoomReset() {
+    this.step = 2;
+    this.element.innerHTML = this.timeLabels;
+  }
+
   update(data) {
     this.data = data;
     this.element.innerHTML = this.timeLabels;

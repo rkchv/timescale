@@ -48,6 +48,12 @@ class Ticks {
     this.element.innerHTML = this.ticks;
   }
 
+  zoomReset() {
+    this.step = 2;
+    this.perHour = 4;
+    this.element.innerHTML = this.ticks;
+  }
+
   update(data) {
     this.data = data;
     this.element.innerHTML = this.ticks;
