@@ -12,13 +12,11 @@ refactor Zoom function
 Private variables
 Private event catchnig
 Destroy
-Round with params
+Round with params (Math.pow(12, 2))
 Reset button
-$
-Удалить неиспользуемые геттеры
+Удалить неиспользуемые геттеры и сделать консистенси в названиях ($)
 
 Потом добавить
-
 
 <div class="timescale-controls">
   <button type="button">Reset</button>

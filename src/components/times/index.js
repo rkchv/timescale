@@ -45,6 +45,11 @@ class Times {
     }, '');
   }
 
+  update(level) {
+    this.step = 2 / level;
+    this.element.innerHTML = this.template;
+  }
+
   calcLeft(index) {
     return round((100 / this.count) * index);
   }

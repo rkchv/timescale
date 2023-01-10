@@ -43,6 +43,14 @@ class Ticks {
     }, '');
   }
 
+  update(level) {
+    this.step = 1;
+    if (level > 8) {
+      this.perHour = 16;
+    }
+    this.element.innerHTML = this.template;
+  }
+
   calcLeft(index) {
     let x = (100 / this.count) * index;
     return round(x);

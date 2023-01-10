@@ -106,9 +106,11 @@ class Timescale {
     this.element.style.transform = `translateX(${round(tranlateTo)}%)`;
   }
 
-  zoomScale({ width, tranlateTo }) {
+  zoomScale({ width, tranlateTo, level }) {
     this.element.style.width = `${round(width)}%`;
     this.element.style.transform = `translateX(${round(tranlateTo)}%)`;
+    this._updateTicks(level);
+    this._updateTimes(level);
   }
 
   setCursor(to) {
@@ -120,6 +122,16 @@ class Timescale {
     this._components.cursor.move(to);
     this._components.cells.updateIndicator(to);
   }
+
+  _updateTicks(level) {
+    this._components.ticks.update(level);
+  }
+
+  _updateTimes(level) {
+    this._components.times.update(level);
+  }
+
+  //
 }
 
 export default connectToObserver(Timescale);

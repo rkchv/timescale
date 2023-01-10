@@ -145,9 +145,11 @@ class Cells {
       tranlateTo = shift;
     }
 
+    let level = this.zoomLevel;
+
     this.observer.dispatchEvent({
       type: 'zoom',
-      payload: { width, tranlateTo },
+      payload: { width, tranlateTo, level },
     });
   }
 
