@@ -21,19 +21,17 @@ player.on('timeupdate', event => {
 
 // Timescale
 
-let keyValue = Object.keys(cells)[0];
-
-let timescale = new Timescale(document.getElementById('timescale'), {
-  from: keyValue,
-  cells: data[keyValue],
-});
+let element = document.getElementById('timescale');
+let timescale = new Timescale(element, { data });
 
 timescale.on('cell.click', play);
 
 function play(e) {
   var id = e.target.dataset.id || null;
   if (!id) return;
-  var url = data[keyValue].filter(item => item.id === id)[0].url;
+
+  let key = Object.keys(data)[0];
+  var url = data[key].filter(item => item.id === id)[0].url;
 
   player.pause();
   player.source = { type: 'video', sources: [{ src: url, type: 'video/mp4' }] };

@@ -1,3 +1,6 @@
+/**
+ * @format
+ */
 
 export const trim = (strings, ...values) => {
   let output = '';
@@ -16,13 +19,13 @@ export const trim = (strings, ...values) => {
     })
     .join(' ')
     .trim();
-}
+};
 
-export const round = (number) => {
+export const round = number => {
   return Math.ceil(number * 100) / 100;
-}
+};
 
-export const secToTime = (timeInSeconds) => {
+export const secToTime = timeInSeconds => {
   let pad = function (num, size) {
     return ('000' + num).slice(size * -1);
   };
@@ -38,17 +41,17 @@ export const secToTime = (timeInSeconds) => {
   }
 
   return pad(minutes, 2) + ':' + pad(seconds, 2);
-}
+};
 
-export const getMsFromDate = (date) => {
+export const getMsFromDate = date => {
   let hours = date.getUTCHours() * 3600 * 1000;
   let minutes = date.getUTCMinutes() * 60 * 1000;
   let seconds = date.getUTCSeconds() * 1000;
   let ms = date.getMilliseconds();
   return hours + minutes + seconds + ms;
-}
+};
 
-export const getTranslate = (item) => {
+export const getTranslate = item => {
   const transArr = [];
   if (!window.getComputedStyle) {
     return;
@@ -64,9 +67,11 @@ export const getTranslate = (item) => {
   mat ? transArr.push(parseFloat(mat[1].split(', ')[5], 10)) : transArr.push(0);
 
   return transArr;
-}
+};
 
-export const calcHours = (cells, from, hours, step) => {
+export const hoursOnScale = (data = [], hours = 24, step = 2) => {
+  let from = Object.keys(data)[0];
+  let cells = data[from];
   let offset = 0;
 
   function calcOffset(stop) {
@@ -76,7 +81,6 @@ export const calcHours = (cells, from, hours, step) => {
   }
 
   cells.forEach(({ start, stop }) => {
-
     let result = calcOffset(stop);
 
     if (result > 0 && offset < result) {
@@ -85,20 +89,4 @@ export const calcHours = (cells, from, hours, step) => {
   });
 
   return hours + Math.ceil(offset) * step;
-}
-
-export const debounce = (fn, delay = 0) => {
-  let timerId;
-
-  return function (...args) {
-    if (timerId) {
-      clearTimeout(timerId);
-    }
-
-    timerId = setTimeout(() => {
-      fn.apply(this, args);
-
-      timerId = null;
-    }, delay);
-  };
 };

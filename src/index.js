@@ -7,7 +7,7 @@ import './style.scss';
 import connectToObserver from './core/observer/connect';
 
 import { createElement, getSubElements } from './core/dom/';
-import { calcHours, round, debounce } from './core/utils/';
+import { hoursOnScale, round } from './core/utils/';
 
 import Cells from './components/cells/';
 import Ticks from './components/ticks/';
@@ -15,28 +15,29 @@ import Times from './components/times/';
 import Cursor from './components/cursor/';
 
 class Timescale {
+  _data;
   _components = {};
-  subElements = [];
-  subscriptions = new Map();
+  _subElements = [];
+  _subscriptions = new Map();
 
-  constructor(
-    root = null,
-    { from, cells = [], hours = 24, step = 2 },
-    observer
-  ) {
+  constructor(root = null, { data = {} }, observer) {
     this.observer = observer;
     this.root = root;
-    this.from = from;
-    this.cells = cells;
-    this.step = step;
-    this.hours = calcHours(cells, from, hours, step);
-
+    this.value = data;
     this.init();
+  }
+
+  set value(data) {
+    this._data = Object.freeze(data);
+  }
+
+  get value() {
+    return Object.freeze(this._data);
   }
 
   init() {
     this.render();
-    this.subElements = getSubElements(this.element);
+    this._subElements = getSubElements(this.element);
     this.initComponents();
     this.renderComponents();
     this.initEventListeners();
@@ -62,10 +63,12 @@ class Timescale {
   }
 
   initComponents() {
-    let cells = new Cells({ hours: this.hours, data: this.cells });
-    let ticks = new Ticks({ hours: this.hours, step: this.step });
-    let times = new Times({ hours: this.hours, step: this.step });
-    let cursor = new Cursor({ position: cells.firstElemPos });
+    let data = { ...this.value };
+
+    let cells = new Cells({ data });
+    let ticks = new Ticks({ data });
+    let times = new Times({ data });
+    let cursor = new Cursor({ x: cells.borderLeft });
 
     this._components = { cells, ticks, times, cursor };
   }
@@ -78,7 +81,7 @@ class Timescale {
 
   renderComponents() {
     for (const component of Object.keys(this._components)) {
-      const root = this.subElements[component];
+      const root = this._subElements[component];
       const { element } = this._components[component];
       root.append(element);
     }
@@ -94,12 +97,12 @@ class Timescale {
 
   _registerObserverEvent(type, callback) {
     let handler = this.observer.subscribe(type, callback);
-    this.subscriptions.set(type, handler);
+    this._subscriptions.set(type, handler);
   }
 
   _removeObserverEvent(type, callback) {
-    this.subscriptions.get(type)();
-    this.subscriptions.delete(type);
+    this._subscriptions.get(type)();
+    this._subscriptions.delete(type);
   }
 
   moveScale(tranlateTo) {
@@ -131,7 +134,11 @@ class Timescale {
     this._components.times.update(level);
   }
 
-  //
+  get hours() {
+    return hoursOnScale({ ...this.value });
+  }
+
+  destroy() {}
 }
 
 export default connectToObserver(Timescale);

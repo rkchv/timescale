@@ -1,4 +1,4 @@
-export default cells = {
+export default data = {
   1670803200: [
     {
       id: '0i75sxs678',

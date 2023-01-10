@@ -5,13 +5,18 @@
 import connectToObserver from '../../core/observer/connect';
 
 import { createElement } from '../../core/dom';
-import { secToTime, round, getTranslate } from '../../core/utils/';
+import {
+  secToTime,
+  round,
+  getTranslate,
+  hoursOnScale,
+} from '../../core/utils/';
 
 class Times {
   element = null;
 
-  constructor({ hours = 24, step = 2 }, observer) {
-    this.hours = hours;
+  constructor({ data = {}, step = 2 }, observer) {
+    this.hours = hoursOnScale(data);
     this.step = step;
     this.observer = observer;
 

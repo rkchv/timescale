@@ -5,13 +5,13 @@
 import connectToObserver from '../../core/observer/connect';
 
 import { createElement } from '../../core/dom';
-import { round } from '../../core/utils/';
+import { round, hoursOnScale } from '../../core/utils/';
 
 class Ticks {
   element = null;
 
-  constructor({ hours = 24, step = 2, perHour = 4 }, observer) {
-    this.hours = hours;
+  constructor({ data = {}, step = 2, perHour = 4 }, observer) {
+    this.hours = hoursOnScale(data);
     this.perHour = perHour;
     this.step = step;
     this.observer = observer;

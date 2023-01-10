@@ -5,15 +5,20 @@
 import connectToObserver from '../../core/observer/connect';
 
 import { createElement } from '../../core/dom';
-import { secToTime, getMsFromDate, round } from '../../core/utils/';
+import {
+  secToTime,
+  getMsFromDate,
+  round,
+  hoursOnScale,
+} from '../../core/utils/';
 
 class Cells {
   element = null;
   zoomLevel = 1;
 
-  constructor({ data = [], hours = 24 }, observer) {
+  constructor({ data = {}, hours = 24 }, observer) {
     this.data = data;
-    this.hours = hours;
+    this.hours = hoursOnScale(data);
     this.observer = observer;
     this.init();
   }
@@ -35,29 +40,35 @@ class Cells {
   }
 
   get cells() {
-    return this.data.reduce((template, { id, start, stop, type }, index) => {
-      let left = this.calcLeft(start);
-      let width = this.calcWidth(start, stop);
-      let time = secToTime(stop - start);
+    let result;
 
-      template += `
-        <div
-          class="timescale-cell"
-          style="left: ${left}%; width: ${width}%"
-          data-id="${id}"
-          data-${type}
-        >
-          <span class="timescale-cell-front"></span>
-          <span class="timescale-cell-text">${time}</span>
-        </div>
-      `;
+    Object.values(this.data).forEach(item => {
+      result = item.reduce((template, { id, start, stop, type }, index) => {
+        let left = this.calcLeft(start);
+        let width = this.calcWidth(start, stop);
+        let time = secToTime(stop - start);
 
-      if (!index) {
-        this.leftCellPos = left;
-      }
+        template += `
+          <div
+            class="timescale-cell"
+            style="left: ${left}%; width: ${width}%"
+            data-id="${id}"
+            data-${type}
+          >
+            <span class="timescale-cell-front"></span>
+            <span class="timescale-cell-text">${time}</span>
+          </div>
+        `;
 
-      return template;
-    }, '');
+        if (!index) {
+          this.firstCellX = left;
+        }
+
+        return template;
+      }, '');
+    });
+
+    return result;
   }
 
   addIndicator(element) {
@@ -184,8 +195,8 @@ class Cells {
     return this.element.closest('.timescale');
   }
 
-  get firstElemPos() {
-    return this.leftCellPos;
+  get borderLeft() {
+    return this.firstCellX;
   }
 }
 
