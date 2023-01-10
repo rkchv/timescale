@@ -16,9 +16,8 @@ class Cells {
   element = null;
   zoomLevel = 1;
 
-  constructor({ data = {}, hours = 24 }, observer) {
+  constructor({ data = {} }, observer) {
     this.data = data;
-    this.hours = hoursOnScale(data);
     this.observer = observer;
     this.init();
   }
@@ -71,6 +70,12 @@ class Cells {
     return result;
   }
 
+  update(data) {
+    this.data = data;
+    this.element.innerHTML = this.cells;
+    this.addIndicator(this.element.firstElementChild);
+  }
+
   addIndicator(element) {
     let template = `<div class="timescale-cell-indicator"></div>`;
     if (this.indicator) {
@@ -97,7 +102,7 @@ class Cells {
   }
 
   get totalHoursMs() {
-    return this.hours * 3600 * 1000;
+    return hoursOnScale(this.data) * 3600 * 1000;
   }
 
   initEventListeners() {
@@ -170,7 +175,7 @@ class Cells {
   }
 
   get offset() {
-    if (this.cacheOffset) return this.cacheOffset;
+    if (typeof this.cacheOffset !== 'undefined') return this.cacheOffset;
     this.cacheOffset = ((this.width - this.rootWidth) / this.width) * 100;
     return this.cacheOffset;
   }

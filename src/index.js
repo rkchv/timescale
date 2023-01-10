@@ -50,16 +50,22 @@ class Timescale {
   }
 
   get template() {
-    let width = 100 + ((this.hours - 24) / 24) * 100;
-
     return `
-      <div class="timescale-scale" style="width: ${round(width)}%">
+      <div class="timescale-scale" style="width: ${round(this.width)}%">
         <div data-element="cells"></div>
         <div data-element="ticks"></div>
         <div data-element="times"></div>
         <div data-element="cursor"></div>
       </div>
     `;
+  }
+
+  get width() {
+    return 100 + ((this.hours - 24) / 24) * 100;
+  }
+
+  get hours() {
+    return hoursOnScale({ ...this.value });
   }
 
   initComponents() {
@@ -112,8 +118,8 @@ class Timescale {
   zoomScale({ width, tranlateTo, level }) {
     this.element.style.width = `${round(width)}%`;
     this.element.style.transform = `translateX(${round(tranlateTo)}%)`;
-    this._updateTicks(level);
-    this._updateTimes(level);
+    this._zoomTicks(level);
+    this._zoomTimes(level);
   }
 
   setCursor(to) {
@@ -126,16 +132,25 @@ class Timescale {
     this._components.cells.updateIndicator(to);
   }
 
-  _updateTicks(level) {
-    this._components.ticks.update(level);
+  _zoomTicks(level) {
+    this._components.ticks.zoom(level);
   }
 
-  _updateTimes(level) {
-    this._components.times.update(level);
+  _zoomTimes(level) {
+    this._components.times.zoom(level);
   }
 
-  get hours() {
-    return hoursOnScale({ ...this.value });
+  update(data) {
+    this.value = data;
+    let newState = { ...this.value };
+
+    this.element.style.width = `${this.width}%`;
+    this._components.cells.update(newState);
+    this._components.ticks.update(newState);
+    this._components.times.update(newState);
+
+    let to = this._components.cells.borderLeft;
+    this._components.cursor.reset(to);
   }
 
   destroy() {}

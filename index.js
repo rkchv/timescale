@@ -7,7 +7,7 @@ import 'plyr/dist/plyr.css';
 
 import Timescale from './src/';
 
-import data from './api/mock';
+import { data, data2 } from './api/mock';
 
 // -------------------------------
 
@@ -37,3 +37,6 @@ function play(e) {
   player.source = { type: 'video', sources: [{ src: url, type: 'video/mp4' }] };
   player.play();
 }
+
+// updating
+// timescale.update(data2);

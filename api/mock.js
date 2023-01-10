@@ -1,4 +1,4 @@
-export default data = {
+export const data = {
   1670803200: [
     {
       id: '0i75sxs678',
@@ -55,6 +55,35 @@ export default data = {
       stop: 1670890844, // Tue Dec 13 2022 00:20:44 GMT+0000
       type: 'registry-attack',
       url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187986/video-7_tm2mc1.mp4',
+    },
+  ],
+};
+
+export const data2 = {
+  1670803200: [
+    {
+      id: 'js892jdbds',
+      // 24:19
+      start: 1670832000, // Mon Dec 12 2022 08:00:00 GMT+0000,
+      stop: 1670833459, // Mon Dec 12 2022 08:24:19 GMT+0000,
+      type: 'registry-attack',
+      url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187415/video-3_nwjv54.mp4',
+    },
+    {
+      // 35:37
+      id: '0x9hhio54s',
+      start: 1670842800, // Mon Dec 12 2022 11:00:00 GMT+0000,
+      stop: 1670844937, // Mon Dec 12 2022 11:35:37 GMT+0000,
+      type: 'network-attack',
+      url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187444/video-4_we7oqg.mp4',
+    },
+    {
+      id: '7gs52b6fgs',
+      // 12:05
+      start: 1670853600, // Mon Dec 12 2022 14:00:00 GMT+0000,
+      stop: 1670854325, // Mon Dec 12 2022 14:12:05 GMT+0000,
+      type: 'suspicious-activity',
+      url: 'https://res.cloudinary.com/rkochnev/video/upload/v1673187300/video-5_ckkjaf.mp4',
     },
   ],
 };

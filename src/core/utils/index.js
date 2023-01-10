@@ -69,7 +69,7 @@ export const getTranslate = item => {
   return transArr;
 };
 
-export const hoursOnScale = (data = [], hours = 24, step = 2) => {
+export const hoursOnScale = (data = {}, hours = 24, step = 2) => {
   let from = Object.keys(data)[0];
   let cells = data[from];
   let offset = 0;

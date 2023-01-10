@@ -2,19 +2,16 @@
  * @format
  */
 
-import connectToObserver from '../../core/observer/connect';
-
 import { createElement } from '../../core/dom';
 import { round, hoursOnScale } from '../../core/utils/';
 
 class Ticks {
   element = null;
 
-  constructor({ data = {}, step = 2, perHour = 4 }, observer) {
-    this.hours = hoursOnScale(data);
+  constructor({ data = {}, step = 2, perHour = 4 }) {
+    this.data = data;
     this.perHour = perHour;
     this.step = step;
-    this.observer = observer;
     this.init();
   }
 
@@ -43,12 +40,17 @@ class Ticks {
     }, '');
   }
 
-  update(level) {
+  zoom(level) {
     this.step = 1;
     if (level > 8) {
       this.perHour = 16;
     }
-    this.element.innerHTML = this.template;
+    this.element.innerHTML = this.ticks;
+  }
+
+  update(data) {
+    this.data = data;
+    this.element.innerHTML = this.ticks;
   }
 
   calcLeft(index) {
@@ -75,6 +77,10 @@ class Ticks {
   get count() {
     return this.hours * this.perHour;
   }
+
+  get hours() {
+    return hoursOnScale({ ...this.data });
+  }
 }
 
-export default connectToObserver(Ticks);
+export default Ticks;

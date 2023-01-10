@@ -16,7 +16,7 @@ class Times {
   element = null;
 
   constructor({ data = {}, step = 2 }, observer) {
-    this.hours = hoursOnScale(data);
+    this.data = data;
     this.step = step;
     this.observer = observer;
 
@@ -50,9 +50,14 @@ class Times {
     }, '');
   }
 
-  update(level) {
+  zoom(level) {
     this.step = 2 / level;
-    this.element.innerHTML = this.template;
+    this.element.innerHTML = this.timeLabels;
+  }
+
+  update(data) {
+    this.data = data;
+    this.element.innerHTML = this.timeLabels;
   }
 
   calcLeft(index) {
@@ -141,6 +146,10 @@ class Times {
 
   get limit() {
     return ((this.width - this.rootWidth) / this.width) * 100;
+  }
+
+  get hours() {
+    return hoursOnScale({ ...this.data });
   }
 }
 
