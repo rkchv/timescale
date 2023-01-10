@@ -9,3 +9,25 @@
 To do
 
 refactor Zoom function
+Private variables
+Private event catchnig
+Destroy
+Round with params
+Reset button
+$
+
+
+Потом добавить
+
+
+<div class="timescale-controls">
+  <button type="button">Reset</button>
+  <button type="button">File Attacks</button>
+  <button type="button">Registry Attack</button>
+  <button type="button">Network Attack</button>
+  <button type="button">Suspicious Activity</button>
+</div>
+
+ResizeObserver
+IntersectionObserver
+MutationObserver

@@ -20,8 +20,9 @@ class Cells {
 
   init() {
     this.render();
-    this.appendIndicator(this.element.firstElementChild);
+    this.addIndicator(this.element.firstElementChild);
     this.initEventListeners();
+    this.initResizeObserver();
   }
 
   render() {
@@ -37,12 +38,11 @@ class Cells {
     return this.data.reduce((template, { id, start, stop, type }, index) => {
       let left = this.calcLeft(start);
       let width = this.calcWidth(start, stop);
-      let name = this.calcFloat(width);
       let time = secToTime(stop - start);
 
       template += `
         <div
-          class="${name}"
+          class="timescale-cell"
           style="left: ${left}%; width: ${width}%"
           data-id="${id}"
           data-${type}
@@ -60,7 +60,7 @@ class Cells {
     }, '');
   }
 
-  appendIndicator(element) {
+  addIndicator(element) {
     let template = `<div class="timescale-cell-indicator"></div>`;
     if (this.indicator) {
       this.indicator.remove();
@@ -85,14 +85,6 @@ class Cells {
     return round((getMsFromDate(startDate) / this.totalHoursMs) * 100);
   }
 
-  calcFloat(width) {
-    // let width = this.root.clientWidth * this.offset;
-    // return (width * width) / 100 < 45
-    //   ? 'timescale-cell float'
-    //   : 'timescale-cell';
-    return 'timescale-cell';
-  }
-
   get totalHoursMs() {
     return this.hours * 3600 * 1000;
   }
@@ -102,12 +94,30 @@ class Cells {
     this.element.addEventListener('dblclick', this.zoom.bind(this));
   }
 
+  initResizeObserver() {
+    this.risizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const width = entry.contentBoxSize[0].inlineSize;
+        if (width <= 45) {
+          entry.target.classList.add('float');
+        } else {
+          entry.target.classList.remove('float');
+        }
+      }
+    });
+
+    for (let cell of this.element.children) {
+      this.risizeObserver.observe(cell);
+      // this.risizeObserver.unobserve(cell)
+    }
+  }
+
   onClick(e) {
     if (e.detail !== 1 || !e.target.dataset.id) return;
 
     this.timer = setTimeout(() => {
       let to = parseFloat(e.target.style.left.slice(0, -1));
-      this.appendIndicator(e.target);
+      this.addIndicator(e.target);
       this.observer.dispatchEvent({ type: 'cell.click', payload: e });
       this.observer.dispatchEvent({ type: 'cursor', payload: to });
     }, 200);
@@ -145,10 +155,6 @@ class Cells {
     let cursor = ((x - this.elementOffset) / this.width) * 100;
     return cursor;
   }
-
-  // get dynamicOffset() {
-  //   return ((this.width - this.rootWidth) / this.width) * 100;
-  // }
 
   get offset() {
     if (this.cacheOffset) return this.cacheOffset;

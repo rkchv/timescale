@@ -71,8 +71,8 @@ class Timescale {
   }
 
   initEventListeners() {
-    this._registerObserverEvent('move', this.move.bind(this));
-    this._registerObserverEvent('zoom', this.zoom.bind(this));
+    this._registerObserverEvent('move', this.moveScale.bind(this));
+    this._registerObserverEvent('zoom', this.zoomScale.bind(this));
     this._registerObserverEvent('cursor', this.setCursor.bind(this));
   }
 
@@ -102,11 +102,11 @@ class Timescale {
     this.subscriptions.delete(type);
   }
 
-  move(tranlateTo) {
+  moveScale(tranlateTo) {
     this.element.style.transform = `translateX(${round(tranlateTo)}%)`;
   }
 
-  zoom({ width, tranlateTo }) {
+  zoomScale({ width, tranlateTo }) {
     this.element.style.width = `${round(width)}%`;
     this.element.style.transform = `translateX(${round(tranlateTo)}%)`;
   }

@@ -33,7 +33,11 @@ export const secToTime = (timeInSeconds) => {
   let seconds = Math.floor(time - minutes * 60);
   let milliseconds = time.slice(-3);
 
-  return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2);
+  if (hours > 0) {
+    return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2);
+  }
+
+  return pad(minutes, 2) + ':' + pad(seconds, 2);
 }
 
 export const getMsFromDate = (date) => {
