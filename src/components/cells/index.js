@@ -29,7 +29,7 @@ class Cells {
 
   init() {
     this.render();
-    this._initBack(); // back layer relevant for showing progress
+    this._initBack(this.$element.firstElementChild); // back layer relevant for showing progress
     this._initEventListeners();
     this._initResizeObserver();
   }
@@ -83,14 +83,14 @@ class Cells {
     Background
   */
 
-  _initBack() {
+  _initBack($element) {
     let template = `<div class="timescale-cell-back"></div>`;
     if (this.$back) {
       this.$back.remove();
       this.$back = null;
     }
     this.$back = createElement(template);
-    this.$element.firstElementChild.append(this.$back);
+    $element.append(this.$back);
   }
 
   /*
