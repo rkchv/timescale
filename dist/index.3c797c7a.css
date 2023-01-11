@@ -1497,7 +1497,7 @@ body {
   opacity: 1;
 }
 
-.timescale-cell-indicator {
+.timescale-cell-back {
   z-index: 1;
   height: 100%;
   width: 0;
@@ -1510,23 +1510,23 @@ body {
   left: 0;
 }
 
-.timescale-cell[data-file-attack] .timescale-cell-indicator {
+.timescale-cell[data-file-attack] .timescale-cell-back {
   background-color: #e9847d;
 }
 
-.timescale-cell[data-process-attack] .timescale-cell-indicator {
+.timescale-cell[data-process-attack] .timescale-cell-back {
   background-color: #5baeef;
 }
 
-.timescale-cell[data-registry-attack] .timescale-cell-indicator {
+.timescale-cell[data-registry-attack] .timescale-cell-back {
   background-color: #b17bb9;
 }
 
-.timescale-cell[data-network-attack] .timescale-cell-indicator {
+.timescale-cell[data-network-attack] .timescale-cell-back {
   background-color: #8ec519;
 }
 
-.timescale-cell[data-suspicious-activity] .timescale-cell-indicator {
+.timescale-cell[data-suspicious-activity] .timescale-cell-back {
   background-color: #4bc580;
 }
 
@@ -1587,17 +1587,6 @@ body {
   color: #58585a;
   position: absolute;
   top: -25px;
-}
-
-.timescale-selection {
-  z-index: 5;
-  width: 0;
-  height: 0;
-  background-color: #009fe326;
-  border: 1px solid #009fe3;
-  position: absolute;
-  top: 0;
-  left: 0;
 }
 
 .timescale [data-element="cursor"] {

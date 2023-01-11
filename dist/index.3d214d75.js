@@ -549,10 +549,9 @@ player.on("timeupdate", (event)=>{
     timescale.moveCursor(instance.currentTime);
 });
 // Timescale
+//
 let element = document.getElementById("timescale");
-let timescale = new (0, _Default.default)(element, {
-    data: (0, _mock.data)
-});
+let timescale = new (0, _Default.default)(element, (0, _mock.data));
 timescale.on("cell.click", play);
 function play(e) {
     var id = e.target.dataset.id || null;
@@ -4004,15 +4003,17 @@ var _Default3 = parcelHelpers.interopDefault(_5);
 var _6 = require("./components/reset/");
 var _Default4 = parcelHelpers.interopDefault(_6);
 class Timescale {
-    _data = {};
+    $root;
+    $element;
+    $scale;
+    _data;
     _components = {};
     _subElements = [];
     _subscriptions = new Map();
-    _isZoom = false;
-    constructor(root = null, { data ={}  }, observer){
-        this.observer = observer;
-        this.root = root;
+    constructor(root = null, data = {}, observer){
+        this.$root = root;
         this.value = data;
+        this.observer = observer; // injected
         this.init();
     }
     set value(data) {
@@ -4023,21 +4024,21 @@ class Timescale {
     }
     init() {
         this.render();
-        this._subElements = (0, _.getSubElements)(this.element);
-        this.initComponents();
-        this.renderComponents();
-        this.initEventListeners();
-        this.root.append(this.element);
+        this._subElements = (0, _.getSubElements)(this.$element);
+        this._initComponents();
+        this._renderComponents();
+        this._initEventListeners();
+        this.$root.append(this.$element);
     }
     render() {
         let template = this.template;
-        this.element = (0, _.createElement)(template);
-        this.scale = this.element.firstElementChild;
+        this.$element = (0, _.createElement)(template);
+        this.$scale = this.$element.firstElementChild;
     }
     get template() {
         return `
       <div class="timescale-wrapper">
-        <div class="timescale-scale" style="width: ${(0, _1.round)(this.width)}%">
+        <div class="timescale-scale" style="width: ${this.width}%">
           <div data-element="cells"></div>
           <div data-element="ticks"></div>
           <div data-element="times"></div>
@@ -4048,20 +4049,19 @@ class Timescale {
     `;
     }
     get width() {
-        return 100 + (this.hours - 24) / 24 * 100;
+        return (0, _1.round)(100 + (this.hours - 24) / 24 * 100);
     }
     get hours() {
-        return (0, _1.hoursOnScale)({
-            ...this.value
-        });
-    }
-    initComponents() {
         let data = {
             ...this.value
         };
-        let cells = new (0, _Default.default)({
-            data
-        });
+        return (0, _1.hoursOnScale)(data);
+    }
+    _initComponents() {
+        let data = {
+            ...this.value
+        };
+        let cells = new (0, _Default.default)(data);
         let ticks = new (0, _Default1.default)({
             data
         });
@@ -4080,17 +4080,17 @@ class Timescale {
             reset
         };
     }
-    initEventListeners() {
+    _initEventListeners() {
         this._registerObserverEvent("move", this.moveScale.bind(this));
         this._registerObserverEvent("zoom", this.zoomScale.bind(this));
         this._registerObserverEvent("reset", this.zoomReset.bind(this));
         this._registerObserverEvent("cursor", this.setCursor.bind(this));
     }
-    renderComponents() {
+    _renderComponents() {
         for (const component of Object.keys(this._components)){
-            const root = this._subElements[component];
-            const { element  } = this._components[component];
-            root.append(element);
+            const $root = this._subElements[component];
+            const { $element  } = this._components[component];
+            $root.append($element);
         }
     }
     on(type, callback) {
@@ -4108,18 +4108,18 @@ class Timescale {
         this._subscriptions.delete(type);
     }
     moveScale(tranlateTo) {
-        this.scale.style.transform = `translateX(${(0, _1.round)(tranlateTo)}%)`;
+        this.$scale.style.transform = `translateX(${(0, _1.round)(tranlateTo)}%)`;
     }
-    zoomScale({ width , tranlateTo , level  }) {
-        this.scale.style.width = `${(0, _1.round)(width)}%`;
-        this.scale.style.transform = `translateX(${(0, _1.round)(tranlateTo)}%)`;
+    zoomScale({ width , level , tranlateTo  }) {
+        this.$scale.style.width = `${width}%`;
+        this.$scale.style.transform = `translateX(${(0, _1.round)(tranlateTo)}%)`;
         this._components.ticks.zoom(level);
         this._components.times.zoom(level);
         this._components.reset.show();
     }
     zoomReset() {
-        this.scale.style.width = `${this.width}%`;
-        this.scale.style.transform = `translateX(0)`;
+        this.$scale.style.width = `${this.width}%`;
+        this.$scale.style.transform = `translateX(0)`;
         this._components.cells.zoomReset();
         this._components.ticks.zoomReset();
         this._components.times.zoomReset();
@@ -4129,16 +4129,16 @@ class Timescale {
         this._components.cursor.set(to);
     }
     moveCursor(time) {
-        let to = Math.floor(time / (this.hours * 3600) * 1000000) / 10000;
+        let to = (0, _1.round)(time / (this.hours * 3600) * 100, 4);
         this._components.cursor.move(to);
-        this._components.cells.updateIndicator(to);
+        this._components.cells.setBack(to);
     }
     update(data) {
         this.value = data;
         let newState = {
             ...this.value
         };
-        this.scale.style.width = `${this.width}%`;
+        this.$scale.style.width = `${this.width}%`;
         this._components.cells.update(newState);
         this._components.ticks.update(newState);
         this._components.times.update(newState);
@@ -4154,6 +4154,7 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _indexJs = require("./index.js");
 var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
+// Decorator pattern
 const connectToObserver = (Component)=>class extends Component {
         static name = `connected to observer ${Component.name}`;
         constructor(...props){
@@ -4171,7 +4172,6 @@ parcelHelpers.defineInteropFlag(exports);
 class Observer {
     static #instance;
     callbacks = {};
-    // TODO: add constructor
     static get instance() {
         if (Observer.#instance) return Observer.#instance;
         Observer.#instance = new Observer();
@@ -4273,7 +4273,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "trim", ()=>trim);
 parcelHelpers.export(exports, "round", ()=>round);
 parcelHelpers.export(exports, "secToTime", ()=>secToTime);
-parcelHelpers.export(exports, "getMsFromDate", ()=>getMsFromDate);
+parcelHelpers.export(exports, "msFromDate", ()=>msFromDate);
 parcelHelpers.export(exports, "getTranslate", ()=>getTranslate);
 parcelHelpers.export(exports, "hoursOnScale", ()=>hoursOnScale);
 const trim = (strings, ...values)=>{
@@ -4287,8 +4287,8 @@ const trim = (strings, ...values)=>{
         return line.replace(/^\s+/gm, "");
     }).join(" ").trim();
 };
-const round = (number)=>{
-    return Math.ceil(number * 100) / 100;
+const round = (number, count = 2)=>{
+    return Math.ceil(number * Math.pow(10, count)) / Math.pow(10, count);
 };
 const secToTime = (timeInSeconds)=>{
     let pad = function(num, size) {
@@ -4302,7 +4302,7 @@ const secToTime = (timeInSeconds)=>{
     if (hours > 0) return pad(hours, 2) + ":" + pad(minutes, 2) + ":" + pad(seconds, 2);
     return pad(minutes, 2) + ":" + pad(seconds, 2);
 };
-const getMsFromDate = (date)=>{
+const msFromDate = (date)=>{
     let hours = date.getUTCHours() * 3600000;
     let minutes = date.getUTCMinutes() * 60000;
     let seconds = date.getUTCSeconds() * 1000;
@@ -4347,32 +4347,42 @@ var _connectDefault = parcelHelpers.interopDefault(_connect);
 var _dom = require("../../core/dom");
 var _ = require("../../core/utils/");
 class Cells {
-    element = null;
-    zoomLevel = 1;
-    constructor({ data ={}  }, observer){
-        this.data = data;
+    $element;
+    _zoomValue;
+    _data;
+    constructor(data = {}, observer){
+        this.value = data;
+        this._zoomValue = 1;
         this.observer = observer;
         this.init();
     }
+    set value(data) {
+        this._data = Object.freeze(data);
+    }
+    get value() {
+        return Object.freeze(this._data);
+    }
     init() {
         this.render();
-        this.addIndicator(this.element.firstElementChild);
-        this.initEventListeners();
-        this.initResizeObserver();
+        this._initBack(); // back layer relevant for showing progress
+        this._initEventListeners();
+        this._initResizeObserver();
     }
-    render() {
+    /*
+    Render
+  */ render() {
         let template = this.template;
-        this.element = (0, _dom.createElement)(template);
+        this.$element = (0, _dom.createElement)(template);
     }
     get template() {
         return `<div class="timescale-cells">${this.cells}</div>`;
     }
     get cells() {
-        let result;
-        Object.values(this.data).forEach((item)=>{
-            result = item.reduce((template, { id , start , stop , type  }, index)=>{
-                let left = this.calcLeft(start);
-                let width = this.calcWidth(start, stop);
+        let cells;
+        Object.values(this.value).forEach((item)=>{
+            cells = item.reduce((template, { id , start , stop , type  }, index)=>{
+                let left = this._calcLeft(start);
+                let width = this._calcWidth(start, stop);
                 let time = (0, _.secToTime)(stop - start);
                 template += `
           <div
@@ -4385,49 +4395,27 @@ class Cells {
             <span class="timescale-cell-text">${time}</span>
           </div>
         `;
-                if (!index) this.firstCellX = left;
+                if (!index) this._left = left;
                 return template;
             }, "");
         });
-        return result;
+        return cells;
     }
-    update(data) {
-        this.data = data;
-        this.element.innerHTML = this.cells;
-        this.addIndicator(this.element.firstElementChild);
-    }
-    zoomReset() {
-        this.zoomLevel = 1;
-    }
-    addIndicator(element) {
-        let template = `<div class="timescale-cell-indicator"></div>`;
-        if (this.indicator) {
-            this.indicator.remove();
-            this.indicator = null;
+    /*
+    Background
+  */ _initBack() {
+        let template = `<div class="timescale-cell-back"></div>`;
+        if (this.$back) {
+            this.$back.remove();
+            this.$back = null;
         }
-        this.indicator = (0, _dom.createElement)(template);
-        element.append(this.indicator);
+        this.$back = (0, _dom.createElement)(template);
+        this.$element.firstElementChild.append(this.$back);
     }
-    updateIndicator(to) {
-        let width = this.indicator.parentNode.style.width.slice(0, -1);
-        this.indicator.style.width = `${(0, _.round)(to / width * 100)}%`;
-    }
-    calcWidth(start, stop) {
-        let ms = (stop - start) * 1000;
-        return (0, _.round)(ms / this.totalHoursMs * 100);
-    }
-    calcLeft(start) {
-        let startDate = new Date(start * 1000);
-        return (0, _.round)((0, _.getMsFromDate)(startDate) / this.totalHoursMs * 100);
-    }
-    get totalHoursMs() {
-        return (0, _.hoursOnScale)(this.data) * 3600000;
-    }
-    initEventListeners() {
-        this.element.addEventListener("click", this.onClick.bind(this));
-        this.element.addEventListener("dblclick", this.zoom.bind(this));
-    }
-    initResizeObserver() {
+    /*
+    Cell resize browser observer
+  */ _initResizeObserver() {
+        if (this.risizeObserver) this.risizeObserver.disconnect();
         this.risizeObserver = new ResizeObserver((entries)=>{
             for (let entry of entries){
                 const width = entry.contentBoxSize[0].inlineSize;
@@ -4435,16 +4423,24 @@ class Cells {
                 else entry.target.classList.remove("float");
             }
         });
-        for (let cell of this.element.children)this.risizeObserver.observe(cell);
+        for (let cell of this.$element.children)this.risizeObserver.observe(cell);
+    }
+    /*
+    Listeners
+  */ _initEventListeners() {
+        this.$element.addEventListener("click", this.onClick.bind(this));
+        this.$element.addEventListener("dblclick", this.onDoubleClick.bind(this));
     }
     onClick(e) {
         if (e.detail !== 1 || !e.target.dataset.id) return;
-        this.timer = setTimeout(()=>{
-            let to = parseFloat(e.target.style.left.slice(0, -1));
-            this.addIndicator(e.target);
+        let event = e;
+        let target = event.target;
+        let to = parseFloat(target.style.left.slice(0, -1));
+        this._timer = setTimeout(()=>{
+            this._initBack(target);
             this.observer.dispatchEvent({
                 type: "cell.click",
-                payload: e
+                payload: event
             });
             this.observer.dispatchEvent({
                 type: "cursor",
@@ -4452,53 +4448,74 @@ class Cells {
             });
         }, 200);
     }
-    zoom(e) {
-        clearTimeout(this.timer);
-        let width = this.nextWidth;
-        let cursor = this.calcCursorX(e.clientX);
-        this.zoomLevel *= 2;
-        let maxOffset = -((this.width * 2 - this.rootWidth) / (this.width * 2)) * 100;
-        let shift = -cursor + (100 - this.offset) / this.zoomLevel / 2;
+    onDoubleClick(e) {
+        clearTimeout(this._timer);
+        let currentWidth = this.elementWidth / this.rootWidth * 100;
+        let newWdith = currentWidth * 2;
+        let clickX = (e.clientX - this.elementX) / this.elementWidth * 100;
+        if (typeof this.offset === "undefined") this.offset = (this.elementWidth - this.rootWidth) / this.elementWidth * 100;
+        this._zoomValue *= 2;
+        let shift = -clickX + (100 - this.offset) / this._zoomValue / 2;
+        let maxOffset = -((newWdith - 100) / newWdith) * 100;
         let tranlateTo;
         if (shift >= 0) tranlateTo = 0;
         else if (shift < maxOffset) tranlateTo = maxOffset;
         else tranlateTo = shift;
-        let level = this.zoomLevel;
+        this._zoom(newWdith, this._zoomValue, tranlateTo);
+    }
+    _zoom(width, level, tranlateTo) {
         this.observer.dispatchEvent({
             type: "zoom",
             payload: {
                 width,
-                tranlateTo,
-                level
+                level,
+                tranlateTo
             }
         });
     }
-    calcCursorX(x) {
-        let cursor = (x - this.elementOffset) / this.width * 100;
-        return cursor;
+    /*
+    Public
+  */ update(data) {
+        this.value = data;
+        this.$element.innerHTML = this.cells;
+        this._initBack();
+        this._initResizeObserver();
     }
-    get offset() {
-        if (typeof this.cacheOffset !== "undefined") return this.cacheOffset;
-        this.cacheOffset = (this.width - this.rootWidth) / this.width * 100;
-        return this.cacheOffset;
+    setBack(to) {
+        let width = this.$back.parentNode.style.width.slice(0, -1);
+        this.$back.style.width = `${(0, _.round)(to / width * 100)}%`;
     }
-    get elementOffset() {
-        return this.element.getBoundingClientRect().x;
+    zoomReset() {
+        this._zoomValue = 1;
+    }
+    /*
+    Calculations
+  */ _calcWidth(start, stop) {
+        let msOnCell = (stop - start) * 1000;
+        return (0, _.round)(msOnCell / this.msOnScale * 100);
+    }
+    _calcLeft(start) {
+        let startDate = new Date(start * 1000);
+        return (0, _.round)((0, _.msFromDate)(startDate) / this.msOnScale * 100);
+    }
+    get msOnScale() {
+        let data = {
+            ...this.value
+        };
+        return (0, _.hoursOnScale)(data) * 3600000;
+    }
+    get elementX() {
+        return this.$element.getBoundingClientRect().x;
     }
     get rootWidth() {
-        return this.$root.getBoundingClientRect().width;
+        let root = this.$element.closest(".timescale");
+        return root.getBoundingClientRect().width;
     }
-    get width() {
-        return this.element.getBoundingClientRect().width;
-    }
-    get nextWidth() {
-        return this.width / this.rootWidth * 200;
-    }
-    get $root() {
-        return this.element.closest(".timescale");
+    get elementWidth() {
+        return this.$element.getBoundingClientRect().width;
     }
     get borderLeft() {
-        return this.firstCellX;
+        return this._left;
     }
 }
 exports.default = (0, _connectDefault.default)(Cells);
@@ -4511,7 +4528,7 @@ parcelHelpers.defineInteropFlag(exports);
 var _dom = require("../../core/dom");
 var _ = require("../../core/utils/");
 class Ticks {
-    element = null;
+    $element;
     constructor({ data ={} , step =2 , perHour =4  }){
         this.data = data;
         this.perHour = perHour;
@@ -4523,7 +4540,7 @@ class Ticks {
     }
     render() {
         let template = this.template;
-        this.element = (0, _dom.createElement)(template);
+        this.$element = (0, _dom.createElement)(template);
     }
     get template() {
         return `<div class="timescale-ticks">${this.ticks}</div>`;
@@ -4543,16 +4560,16 @@ class Ticks {
     zoom(level) {
         this.step = 1;
         if (level > 8) this.perHour = 16;
-        this.element.innerHTML = this.ticks;
+        this.$element.innerHTML = this.ticks;
     }
     zoomReset() {
         this.step = 2;
         this.perHour = 4;
-        this.element.innerHTML = this.ticks;
+        this.$element.innerHTML = this.ticks;
     }
     update(data) {
         this.data = data;
-        this.element.innerHTML = this.ticks;
+        this.$element.innerHTML = this.ticks;
     }
     calcLeft(index) {
         let x = 100 / this.count * index;
@@ -4585,7 +4602,7 @@ var _connectDefault = parcelHelpers.interopDefault(_connect);
 var _dom = require("../../core/dom");
 var _ = require("../../core/utils/");
 class Times {
-    element = null;
+    element;
     constructor({ data ={} , step =2  }, observer){
         this.data = data;
         this.step = step;
@@ -4599,7 +4616,7 @@ class Times {
     }
     render() {
         let template = this.template;
-        this.element = (0, _dom.createElement)(template);
+        this.$element = (0, _dom.createElement)(template);
     }
     get template() {
         return `<div class="timescale-times">${this.timeLabels}</div>`;
@@ -4618,15 +4635,15 @@ class Times {
     }
     zoom(level) {
         this.step = 2 / level;
-        this.element.innerHTML = this.timeLabels;
+        this.$element.innerHTML = this.timeLabels;
     }
     zoomReset() {
         this.step = 2;
-        this.element.innerHTML = this.timeLabels;
+        this.$element.innerHTML = this.timeLabels;
     }
     update(data) {
         this.data = data;
-        this.element.innerHTML = this.timeLabels;
+        this.$element.innerHTML = this.timeLabels;
     }
     calcLeft(index) {
         return (0, _.round)(100 / this.count * index);
@@ -4651,14 +4668,14 @@ class Times {
         this.onMouseMove = this.onMouseMove.bind(this);
     }
     initEventListeners() {
-        this.element.addEventListener("mousedown", this.onMouseDown);
-        this.element.addEventListener("mouseup", this.onMouseUp);
-        this.element.addEventListener("dragstart", ()=>false);
+        this.$element.addEventListener("mousedown", this.onMouseDown);
+        document.addEventListener("mouseup", this.onMouseUp);
+        this.$element.addEventListener("dragstart", ()=>false);
     }
     onMouseDown(e) {
         this.x = (0, _.getTranslate)(this.scale)[0] / this.width * 100;
         this.translateFrom = e.clientX;
-        this.element.addEventListener("mousemove", this.onMouseMove);
+        document.addEventListener("mousemove", this.onMouseMove);
     }
     onMouseMove(e) {
         let shift = (e.clientX - this.translateFrom) / this.width * 100;
@@ -4673,7 +4690,7 @@ class Times {
     }
     onMouseUp() {
         this.x = this.tranlateTo;
-        this.element.removeEventListener("mousemove", this.onMouseMove);
+        document.removeEventListener("mousemove", this.onMouseMove);
     }
     get width() {
         return this.scale.getBoundingClientRect().width;
@@ -4682,10 +4699,10 @@ class Times {
         return this.root.getBoundingClientRect().width;
     }
     get root() {
-        return this.element.closest(".timescale");
+        return this.$element.closest(".timescale");
     }
     get scale() {
-        return this.element.closest(".timescale-scale");
+        return this.$element.closest(".timescale-scale");
     }
     get limit() {
         return (this.width - this.rootWidth) / this.width * 100;
@@ -4706,7 +4723,7 @@ parcelHelpers.defineInteropFlag(exports);
 var _ = require("../../core/dom/");
 var _1 = require("../../core/utils/");
 class Cursor {
-    element;
+    $element;
     constructor({ x =0  }){
         this.x = x;
         this.init();
@@ -4716,24 +4733,24 @@ class Cursor {
     }
     render() {
         let template = this.template;
-        this.element = (0, _.createElement)(template);
+        this.$element = (0, _.createElement)(template);
     }
     get template() {
         return `<div class="timescale-cursor"></div>`;
     }
     set(to) {
         this.x = to;
-        this.element.style.opacity = 1;
-        this.element.style.left = `${this.x}%`;
+        this.$element.style.opacity = 1;
+        this.$element.style.left = `${this.x}%`;
     }
     move(to) {
-        this.element.style.opacity = 1;
-        this.element.style.left = `${this.x + to}%`;
+        this.$element.style.opacity = 1;
+        this.$element.style.left = `${this.x + to}%`;
     }
     reset(to) {
         this.x = to;
-        this.element.style.opacity = 0;
-        this.element.style.left = `${this.x}%`;
+        this.$element.style.opacity = 0;
+        this.$element.style.left = `${this.x}%`;
     }
 }
 exports.default = Cursor;
@@ -4747,7 +4764,7 @@ var _connect = require("../../core/observer/connect");
 var _connectDefault = parcelHelpers.interopDefault(_connect);
 var _dom = require("../../core/dom");
 class Reset {
-    element = null;
+    $element;
     constructor(observer){
         this.observer = observer;
         this.init();
@@ -4758,26 +4775,24 @@ class Reset {
     }
     render() {
         let template = this.template;
-        this.element = (0, _dom.createElement)(template);
+        this.$element = (0, _dom.createElement)(template);
     }
     initEventListeners() {
-        this.element.addEventListener("click", this.onClick.bind(this));
+        this.$element.addEventListener("click", this.onClick.bind(this));
     }
     onClick() {
-        console.log(this.observer);
         this.observer.dispatchEvent({
             type: "reset"
         });
     }
     get template() {
-        let disabled = this.isDisabled;
         return `<button class="button disabled" type="button">Reset</button>`;
     }
     show() {
-        this.element.classList.remove("disabled");
+        this.$element.classList.remove("disabled");
     }
     hide() {
-        this.element.classList.add("disabled");
+        this.$element.classList.add("disabled");
     }
 }
 exports.default = (0, _connectDefault.default)(Reset);

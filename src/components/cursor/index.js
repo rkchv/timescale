@@ -6,7 +6,7 @@ import { createElement } from '../../core/dom/';
 import { round } from '../../core/utils/';
 
 class Cursor {
-  element;
+  $element;
 
   constructor({ x = 0 }) {
     this.x = x;
@@ -19,7 +19,7 @@ class Cursor {
 
   render() {
     let template = this.template;
-    this.element = createElement(template);
+    this.$element = createElement(template);
   }
 
   get template() {
@@ -28,19 +28,19 @@ class Cursor {
 
   set(to) {
     this.x = to;
-    this.element.style.opacity = 1;
-    this.element.style.left = `${this.x}%`;
+    this.$element.style.opacity = 1;
+    this.$element.style.left = `${this.x}%`;
   }
 
   move(to) {
-    this.element.style.opacity = 1;
-    this.element.style.left = `${this.x + to}%`;
+    this.$element.style.opacity = 1;
+    this.$element.style.left = `${this.x + to}%`;
   }
 
   reset(to) {
     this.x = to;
-    this.element.style.opacity = 0;
-    this.element.style.left = `${this.x}%`;
+    this.$element.style.opacity = 0;
+    this.$element.style.left = `${this.x}%`;
   }
 }
 

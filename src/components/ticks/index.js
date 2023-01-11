@@ -6,7 +6,7 @@ import { createElement } from '../../core/dom';
 import { round, hoursOnScale } from '../../core/utils/';
 
 class Ticks {
-  element = null;
+  $element;
 
   constructor({ data = {}, step = 2, perHour = 4 }) {
     this.data = data;
@@ -21,7 +21,7 @@ class Ticks {
 
   render() {
     let template = this.template;
-    this.element = createElement(template);
+    this.$element = createElement(template);
   }
 
   get template() {
@@ -45,18 +45,18 @@ class Ticks {
     if (level > 8) {
       this.perHour = 16;
     }
-    this.element.innerHTML = this.ticks;
+    this.$element.innerHTML = this.ticks;
   }
 
   zoomReset() {
     this.step = 2;
     this.perHour = 4;
-    this.element.innerHTML = this.ticks;
+    this.$element.innerHTML = this.ticks;
   }
 
   update(data) {
     this.data = data;
-    this.element.innerHTML = this.ticks;
+    this.$element.innerHTML = this.ticks;
   }
 
   calcLeft(index) {

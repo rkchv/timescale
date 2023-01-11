@@ -6,7 +6,7 @@ import connectToObserver from '../../core/observer/connect';
 import { createElement } from '../../core/dom';
 
 class Reset {
-  element = null;
+  $element;
 
   constructor(observer) {
     this.observer = observer;
@@ -20,29 +20,27 @@ class Reset {
 
   render() {
     let template = this.template;
-    this.element = createElement(template);
+    this.$element = createElement(template);
   }
 
   initEventListeners() {
-    this.element.addEventListener('click', this.onClick.bind(this));
+    this.$element.addEventListener('click', this.onClick.bind(this));
   }
 
   onClick() {
-    console.log(this.observer);
     this.observer.dispatchEvent({ type: 'reset' });
   }
 
   get template() {
-    let disabled = this.isDisabled;
     return `<button class="button disabled" type="button">Reset</button>`;
   }
 
   show() {
-    this.element.classList.remove('disabled');
+    this.$element.classList.remove('disabled');
   }
 
   hide() {
-    this.element.classList.add('disabled');
+    this.$element.classList.add('disabled');
   }
 }
 

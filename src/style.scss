@@ -145,7 +145,7 @@ body {
       opacity: 1;
     }
 
-    &-indicator {
+    &-back {
       position: absolute;
       z-index: 1;
       left: 0;
@@ -239,17 +239,6 @@ body {
 
     }
 
-  }
-
-  &-selection {
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 5;
-    width: 0;
-    height: 0;
-    border: 1px solid #009fe3;
-    background-color: rgba(0, 159, 227, .15);
   }
 
   [data-element="cursor"] {

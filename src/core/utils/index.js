@@ -21,8 +21,8 @@ export const trim = (strings, ...values) => {
     .trim();
 };
 
-export const round = number => {
-  return Math.ceil(number * 100) / 100;
+export const round = (number, count = 2) => {
+  return Math.ceil(number * Math.pow(10, count)) / Math.pow(10, count);
 };
 
 export const secToTime = timeInSeconds => {
@@ -43,7 +43,7 @@ export const secToTime = timeInSeconds => {
   return pad(minutes, 2) + ':' + pad(seconds, 2);
 };
 
-export const getMsFromDate = date => {
+export const msFromDate = date => {
   let hours = date.getUTCHours() * 3600 * 1000;
   let minutes = date.getUTCMinutes() * 60 * 1000;
   let seconds = date.getUTCSeconds() * 1000;

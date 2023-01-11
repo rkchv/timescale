@@ -20,9 +20,9 @@ player.on('timeupdate', event => {
 });
 
 // Timescale
-
+//
 let element = document.getElementById('timescale');
-let timescale = new Timescale(element, { data });
+let timescale = new Timescale(element, data);
 
 timescale.on('cell.click', play);
 

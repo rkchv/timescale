@@ -7,7 +7,6 @@ export default class Observer {
 
   callbacks = {};
 
-  // TODO: add constructor
   static get instance() {
     if (Observer.#instance) {
       return Observer.#instance;

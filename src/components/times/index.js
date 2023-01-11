@@ -13,7 +13,7 @@ import {
 } from '../../core/utils/';
 
 class Times {
-  element = null;
+  element;
 
   constructor({ data = {}, step = 2 }, observer) {
     this.data = data;
@@ -31,7 +31,7 @@ class Times {
 
   render() {
     let template = this.template;
-    this.element = createElement(template);
+    this.$element = createElement(template);
   }
 
   get template() {
@@ -52,17 +52,17 @@ class Times {
 
   zoom(level) {
     this.step = 2 / level;
-    this.element.innerHTML = this.timeLabels;
+    this.$element.innerHTML = this.timeLabels;
   }
 
   zoomReset() {
     this.step = 2;
-    this.element.innerHTML = this.timeLabels;
+    this.$element.innerHTML = this.timeLabels;
   }
 
   update(data) {
     this.data = data;
-    this.element.innerHTML = this.timeLabels;
+    this.$element.innerHTML = this.timeLabels;
   }
 
   calcLeft(index) {
@@ -98,15 +98,15 @@ class Times {
   }
 
   initEventListeners() {
-    this.element.addEventListener('mousedown', this.onMouseDown);
-    this.element.addEventListener('mouseup', this.onMouseUp);
-    this.element.addEventListener('dragstart', () => false);
+    this.$element.addEventListener('mousedown', this.onMouseDown);
+    document.addEventListener('mouseup', this.onMouseUp);
+    this.$element.addEventListener('dragstart', () => false);
   }
 
   onMouseDown(e) {
     this.x = (getTranslate(this.scale)[0] / this.width) * 100;
     this.translateFrom = e.clientX;
-    this.element.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mousemove', this.onMouseMove);
   }
 
   onMouseMove(e) {
@@ -130,7 +130,7 @@ class Times {
 
   onMouseUp() {
     this.x = this.tranlateTo;
-    this.element.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mousemove', this.onMouseMove);
   }
 
   get width() {
@@ -142,11 +142,11 @@ class Times {
   }
 
   get root() {
-    return this.element.closest('.timescale');
+    return this.$element.closest('.timescale');
   }
 
   get scale() {
-    return this.element.closest('.timescale-scale');
+    return this.$element.closest('.timescale-scale');
   }
 
   get limit() {

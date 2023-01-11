@@ -5,33 +5,42 @@
 import connectToObserver from '../../core/observer/connect';
 
 import { createElement } from '../../core/dom';
-import {
-  secToTime,
-  getMsFromDate,
-  round,
-  hoursOnScale,
-} from '../../core/utils/';
+import { secToTime, msFromDate, hoursOnScale, round } from '../../core/utils/';
 
 class Cells {
-  element = null;
-  zoomLevel = 1;
+  $element;
+  _zoomValue;
+  _data;
 
-  constructor({ data = {} }, observer) {
-    this.data = data;
+  constructor(data = {}, observer) {
+    this.value = data;
+    this._zoomValue = 1;
     this.observer = observer;
     this.init();
   }
 
+  set value(data) {
+    this._data = Object.freeze(data);
+  }
+
+  get value() {
+    return Object.freeze(this._data);
+  }
+
   init() {
     this.render();
-    this.addIndicator(this.element.firstElementChild);
-    this.initEventListeners();
-    this.initResizeObserver();
+    this._initBack(); // back layer relevant for showing progress
+    this._initEventListeners();
+    this._initResizeObserver();
   }
+
+  /*
+    Render
+  */
 
   render() {
     let template = this.template;
-    this.element = createElement(template);
+    this.$element = createElement(template);
   }
 
   get template() {
@@ -39,12 +48,12 @@ class Cells {
   }
 
   get cells() {
-    let result;
+    let cells;
 
-    Object.values(this.data).forEach(item => {
-      result = item.reduce((template, { id, start, stop, type }, index) => {
-        let left = this.calcLeft(start);
-        let width = this.calcWidth(start, stop);
+    Object.values(this.value).forEach(item => {
+      cells = item.reduce((template, { id, start, stop, type }, index) => {
+        let left = this._calcLeft(start);
+        let width = this._calcWidth(start, stop);
         let time = secToTime(stop - start);
 
         template += `
@@ -60,61 +69,39 @@ class Cells {
         `;
 
         if (!index) {
-          this.firstCellX = left;
+          this._left = left;
         }
 
         return template;
       }, '');
     });
 
-    return result;
+    return cells;
   }
 
-  update(data) {
-    this.data = data;
-    this.element.innerHTML = this.cells;
-    this.addIndicator(this.element.firstElementChild);
-  }
+  /*
+    Background
+  */
 
-  zoomReset() {
-    this.zoomLevel = 1;
-  }
-
-  addIndicator(element) {
-    let template = `<div class="timescale-cell-indicator"></div>`;
-    if (this.indicator) {
-      this.indicator.remove();
-      this.indicator = null;
+  _initBack() {
+    let template = `<div class="timescale-cell-back"></div>`;
+    if (this.$back) {
+      this.$back.remove();
+      this.$back = null;
     }
-    this.indicator = createElement(template);
-    element.append(this.indicator);
+    this.$back = createElement(template);
+    this.$element.firstElementChild.append(this.$back);
   }
 
-  updateIndicator(to) {
-    let width = this.indicator.parentNode.style.width.slice(0, -1);
-    this.indicator.style.width = `${round((to / width) * 100)}%`;
-  }
+  /*
+    Cell resize browser observer
+  */
 
-  calcWidth(start, stop) {
-    let ms = (stop - start) * 1000;
-    return round((ms / this.totalHoursMs) * 100);
-  }
+  _initResizeObserver() {
+    if (this.risizeObserver) {
+      this.risizeObserver.disconnect();
+    }
 
-  calcLeft(start) {
-    let startDate = new Date(start * 1000);
-    return round((getMsFromDate(startDate) / this.totalHoursMs) * 100);
-  }
-
-  get totalHoursMs() {
-    return hoursOnScale(this.data) * 3600 * 1000;
-  }
-
-  initEventListeners() {
-    this.element.addEventListener('click', this.onClick.bind(this));
-    this.element.addEventListener('dblclick', this.zoom.bind(this));
-  }
-
-  initResizeObserver() {
     this.risizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         const width = entry.contentBoxSize[0].inlineSize;
@@ -126,34 +113,49 @@ class Cells {
       }
     });
 
-    for (let cell of this.element.children) {
+    for (let cell of this.$element.children) {
       this.risizeObserver.observe(cell);
-      // this.risizeObserver.unobserve(cell)
     }
+  }
+
+  /*
+    Listeners
+  */
+
+  _initEventListeners() {
+    this.$element.addEventListener('click', this.onClick.bind(this));
+    this.$element.addEventListener('dblclick', this.onDoubleClick.bind(this));
   }
 
   onClick(e) {
     if (e.detail !== 1 || !e.target.dataset.id) return;
+    let event = e;
+    let target = event.target;
+    let to = parseFloat(target.style.left.slice(0, -1));
 
-    this.timer = setTimeout(() => {
-      let to = parseFloat(e.target.style.left.slice(0, -1));
-      this.addIndicator(e.target);
-      this.observer.dispatchEvent({ type: 'cell.click', payload: e });
+    this._timer = setTimeout(() => {
+      this._initBack(target);
+      this.observer.dispatchEvent({ type: 'cell.click', payload: event });
       this.observer.dispatchEvent({ type: 'cursor', payload: to });
     }, 200);
   }
 
-  zoom(e) {
-    clearTimeout(this.timer);
+  onDoubleClick(e) {
+    clearTimeout(this._timer);
 
-    let width = this.nextWidth;
-    let cursor = this.calcCursorX(e.clientX);
-    this.zoomLevel *= 2;
+    let currentWidth = (this.elementWidth / this.rootWidth) * 100;
+    let newWdith = currentWidth * 2;
+    let clickX = ((e.clientX - this.elementX) / this.elementWidth) * 100;
 
-    let maxOffset =
-      -((this.width * 2 - this.rootWidth) / (this.width * 2)) * 100;
+    if (typeof this.offset === 'undefined') {
+      this.offset =
+        ((this.elementWidth - this.rootWidth) / this.elementWidth) * 100;
+    }
 
-    let shift = -cursor + (100 - this.offset) / this.zoomLevel / 2;
+    this._zoomValue *= 2;
+
+    let shift = -clickX + (100 - this.offset) / this._zoomValue / 2;
+    let maxOffset = -((newWdith - 100) / newWdith) * 100;
 
     let tranlateTo;
 
@@ -165,47 +167,70 @@ class Cells {
       tranlateTo = shift;
     }
 
-    let level = this.zoomLevel;
+    this._zoom(newWdith, this._zoomValue, tranlateTo);
+  }
 
+  _zoom(width, level, tranlateTo) {
     this.observer.dispatchEvent({
       type: 'zoom',
-      payload: { width, tranlateTo, level },
+      payload: { width, level, tranlateTo },
     });
   }
 
-  calcCursorX(x) {
-    let cursor = ((x - this.elementOffset) / this.width) * 100;
-    return cursor;
+  /*
+    Public
+  */
+
+  update(data) {
+    this.value = data;
+    this.$element.innerHTML = this.cells;
+    this._initBack();
+    this._initResizeObserver();
   }
 
-  get offset() {
-    if (typeof this.cacheOffset !== 'undefined') return this.cacheOffset;
-    this.cacheOffset = ((this.width - this.rootWidth) / this.width) * 100;
-    return this.cacheOffset;
+  setBack(to) {
+    let width = this.$back.parentNode.style.width.slice(0, -1);
+    this.$back.style.width = `${round((to / width) * 100)}%`;
   }
 
-  get elementOffset() {
-    return this.element.getBoundingClientRect().x;
+  zoomReset() {
+    this._zoomValue = 1;
+  }
+
+  /*
+    Calculations
+  */
+
+  _calcWidth(start, stop) {
+    let msOnCell = (stop - start) * 1000;
+    return round((msOnCell / this.msOnScale) * 100);
+  }
+
+  _calcLeft(start) {
+    let startDate = new Date(start * 1000);
+    return round((msFromDate(startDate) / this.msOnScale) * 100);
+  }
+
+  get msOnScale() {
+    let data = { ...this.value };
+    return hoursOnScale(data) * 3600 * 1000;
+  }
+
+  get elementX() {
+    return this.$element.getBoundingClientRect().x;
   }
 
   get rootWidth() {
-    return this.$root.getBoundingClientRect().width;
+    let root = this.$element.closest('.timescale');
+    return root.getBoundingClientRect().width;
   }
 
-  get width() {
-    return this.element.getBoundingClientRect().width;
-  }
-
-  get nextWidth() {
-    return (this.width / this.rootWidth) * 100 * 2;
-  }
-
-  get $root() {
-    return this.element.closest('.timescale');
+  get elementWidth() {
+    return this.$element.getBoundingClientRect().width;
   }
 
   get borderLeft() {
-    return this.firstCellX;
+    return this._left;
   }
 }
 
