@@ -80,7 +80,7 @@ class Timescale {
   _initComponents() {
     let data = { ...this.value };
 
-    let cells = new Cells(data);
+    let cells = new Cells({ data });
     let ticks = new Ticks({ data });
     let times = new Times({ data });
     let cursor = new Cursor({ x: cells.borderLeft });

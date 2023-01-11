@@ -4061,7 +4061,9 @@ class Timescale {
         let data = {
             ...this.value
         };
-        let cells = new (0, _Default.default)(data);
+        let cells = new (0, _Default.default)({
+            data
+        });
         let ticks = new (0, _Default1.default)({
             data
         });
@@ -4274,7 +4276,7 @@ parcelHelpers.export(exports, "trim", ()=>trim);
 parcelHelpers.export(exports, "round", ()=>round);
 parcelHelpers.export(exports, "secToTime", ()=>secToTime);
 parcelHelpers.export(exports, "msFromDate", ()=>msFromDate);
-parcelHelpers.export(exports, "getTranslate", ()=>getTranslate);
+parcelHelpers.export(exports, "translation", ()=>translation);
 parcelHelpers.export(exports, "hoursOnScale", ()=>hoursOnScale);
 const trim = (strings, ...values)=>{
     let output = "";
@@ -4309,7 +4311,7 @@ const msFromDate = (date)=>{
     let ms = date.getMilliseconds();
     return hours + minutes + seconds + ms;
 };
-const getTranslate = (item)=>{
+const translation = (item)=>{
     const transArr = [];
     if (!window.getComputedStyle) return;
     const style = window.getComputedStyle(item);
@@ -4347,10 +4349,10 @@ var _connectDefault = parcelHelpers.interopDefault(_connect);
 var _dom = require("../../core/dom");
 var _ = require("../../core/utils/");
 class Cells {
-    $element;
-    _zoomValue;
     _data;
-    constructor(data = {}, observer){
+    _zoomValue;
+    $element;
+    constructor({ data ={}  }, observer){
         this.value = data;
         this._zoomValue = 1;
         this.observer = observer;
@@ -4364,7 +4366,7 @@ class Cells {
     }
     init() {
         this.render();
-        this._initBack(this.$element.firstElementChild); // back layer relevant for showing progress
+        this._initBack(); // back layer relevant for showing progress
         this._initEventListeners();
         this._initResizeObserver();
     }
@@ -4395,7 +4397,6 @@ class Cells {
             <span class="timescale-cell-text">${time}</span>
           </div>
         `;
-                if (!index) this._left = left;
                 return template;
             }, "");
         });
@@ -4403,7 +4404,7 @@ class Cells {
     }
     /*
     Background
-  */ _initBack($element) {
+  */ _initBack($element = this.$firstCell) {
         let template = `<div class="timescale-cell-back"></div>`;
         if (this.$back) {
             this.$back.remove();
@@ -4515,7 +4516,10 @@ class Cells {
         return this.$element.getBoundingClientRect().width;
     }
     get borderLeft() {
-        return this._left;
+        return parseFloat(this.$firstCell.style.left.slice(0, -1));
+    }
+    get $firstCell() {
+        return this.$element.firstElementChild;
     }
 }
 exports.default = (0, _connectDefault.default)(Cells);
@@ -4528,12 +4532,21 @@ parcelHelpers.defineInteropFlag(exports);
 var _dom = require("../../core/dom");
 var _ = require("../../core/utils/");
 class Ticks {
+    _data;
+    _perHour;
+    step;
     $element;
     constructor({ data ={} , step =2 , perHour =4  }){
-        this.data = data;
-        this.perHour = perHour;
-        this.step = step;
+        this.value = data;
+        this._perHour = perHour;
+        this._step = step;
         this.init();
+    }
+    set value(data) {
+        this._data = Object.freeze(data);
+    }
+    get value() {
+        return Object.freeze(this._data);
     }
     init() {
         this.render();
@@ -4558,17 +4571,17 @@ class Ticks {
         }, "");
     }
     zoom(level) {
-        this.step = 1;
-        if (level > 8) this.perHour = 16;
+        this._step = 1;
+        if (level > 8) this._perHour = 16;
         this.$element.innerHTML = this.ticks;
     }
     zoomReset() {
-        this.step = 2;
-        this.perHour = 4;
+        this._step = 2;
+        this._perHour = 4;
         this.$element.innerHTML = this.ticks;
     }
     update(data) {
-        this.data = data;
+        this.value = data;
         this.$element.innerHTML = this.ticks;
     }
     calcLeft(index) {
@@ -4577,17 +4590,18 @@ class Ticks {
     }
     calcName(index) {
         if (index % this.count === 0) return "big";
-        if (index % (24 * this.perHour) === 0) return "big shift";
-        if (index % (this.step * this.perHour) === 0) return "middle";
+        if (index % (24 * this._perHour) === 0) return "big shift";
+        if (index % (this._step * this._perHour) === 0) return "middle";
         return "small";
     }
     get count() {
-        return this.hours * this.perHour;
+        return this.hours * this._perHour;
     }
     get hours() {
-        return (0, _.hoursOnScale)({
-            ...this.data
-        });
+        let data = {
+            ...this.value
+        };
+        return (0, _.hoursOnScale)(data);
     }
 }
 exports.default = Ticks;
@@ -4602,17 +4616,28 @@ var _connectDefault = parcelHelpers.interopDefault(_connect);
 var _dom = require("../../core/dom");
 var _ = require("../../core/utils/");
 class Times {
-    element;
+    _data;
+    _step;
+    _x;
+    _translateFrom;
+    _tranlateTo;
+    $element;
     constructor({ data ={} , step =2  }, observer){
-        this.data = data;
-        this.step = step;
+        this.value = data;
+        this._step = step;
         this.observer = observer;
         this.init();
     }
+    set value(data) {
+        this._data = Object.freeze(data);
+    }
+    get value() {
+        return Object.freeze(this._data);
+    }
     init() {
         this.render();
-        this.bindings();
-        this.initEventListeners();
+        this._bind();
+        this._initEventListeners();
     }
     render() {
         let template = this.template;
@@ -4634,83 +4659,84 @@ class Times {
         }, "");
     }
     zoom(level) {
-        this.step = 2 / level;
+        this._step = 2 / level;
         this.$element.innerHTML = this.timeLabels;
     }
     zoomReset() {
-        this.step = 2;
+        this._step = 2;
         this.$element.innerHTML = this.timeLabels;
     }
     update(data) {
-        this.data = data;
+        this.value = data;
         this.$element.innerHTML = this.timeLabels;
     }
     calcLeft(index) {
         return (0, _.round)(100 / this.count * index);
     }
     calcTimeLabel(index) {
-        let labelsPerDay = 24 / this.step;
+        let labelsPerDay = 24 / this._step;
         if (index === 0 || index % labelsPerDay === 0) return `00:00`;
         if (index / labelsPerDay > 1) {
             let rest = index % labelsPerDay;
-            let seconds = rest * this.step * 3600;
+            let seconds = rest * this._step * 3600;
             return (0, _.secToTime)(seconds).slice(0, -3);
         }
-        let seconds1 = index * this.step * 3600;
+        let seconds1 = index * this._step * 3600;
         return (0, _.secToTime)(seconds1).slice(0, -3);
     }
     get count() {
-        return this.hours / this.step;
+        return this.hours / this._step;
     }
-    bindings() {
+    _bind() {
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseUp = this.onMouseUp.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
     }
-    initEventListeners() {
+    _initEventListeners() {
         this.$element.addEventListener("mousedown", this.onMouseDown);
-        document.addEventListener("mouseup", this.onMouseUp);
         this.$element.addEventListener("dragstart", ()=>false);
+        document.addEventListener("mouseup", this.onMouseUp);
     }
     onMouseDown(e) {
-        this.x = (0, _.getTranslate)(this.scale)[0] / this.width * 100;
-        this.translateFrom = e.clientX;
+        this._x = (0, _.translation)(this.$scale)[0] / this.scaleWidth * 100;
+        this._translateFrom = e.clientX;
         document.addEventListener("mousemove", this.onMouseMove);
     }
     onMouseMove(e) {
-        let shift = (e.clientX - this.translateFrom) / this.width * 100;
-        let x = this.x + shift;
-        if (x !== this.tranlateTo && x <= 0 && x >= -this.limit) this.tranlateTo = x;
-        if (x <= -this.limit) this.tranlateTo = -this.limit;
-        if (x >= 0) this.tranlateTo = 0;
+        let shift = (e.clientX - this._translateFrom) / this.scaleWidth * 100;
+        let x = this._x + shift;
+        if (x !== this._tranlateTo && x <= 0 && x >= -this.maxOffset) this._tranlateTo = x;
+        if (x <= -this.maxOffset) this._tranlateTo = -this.maxOffset;
+        if (x >= 0) this._tranlateTo = 0;
         this.observer.dispatchEvent({
             type: "move",
-            payload: this.tranlateTo
+            payload: this._tranlateTo
         });
     }
     onMouseUp() {
-        this.x = this.tranlateTo;
+        this._x = this._tranlateTo;
         document.removeEventListener("mousemove", this.onMouseMove);
     }
-    get width() {
-        return this.scale.getBoundingClientRect().width;
-    }
-    get rootWidth() {
-        return this.root.getBoundingClientRect().width;
-    }
-    get root() {
+    get $root() {
         return this.$element.closest(".timescale");
     }
-    get scale() {
+    get $scale() {
         return this.$element.closest(".timescale-scale");
     }
-    get limit() {
-        return (this.width - this.rootWidth) / this.width * 100;
+    get rootWidth() {
+        return this.$root.getBoundingClientRect().width;
+    }
+    get scaleWidth() {
+        return this.$scale.getBoundingClientRect().width;
+    }
+    get maxOffset() {
+        return (this.scaleWidth - this.rootWidth) / this.scaleWidth * 100;
     }
     get hours() {
-        return (0, _.hoursOnScale)({
-            ...this.data
-        });
+        let data = {
+            ...this.value
+        };
+        return (0, _.hoursOnScale)(data);
     }
 }
 exports.default = (0, _connectDefault.default)(Times);
@@ -4723,9 +4749,10 @@ parcelHelpers.defineInteropFlag(exports);
 var _ = require("../../core/dom/");
 var _1 = require("../../core/utils/");
 class Cursor {
+    _x;
     $element;
     constructor({ x =0  }){
-        this.x = x;
+        this._x = x;
         this.init();
     }
     init() {
@@ -4739,18 +4766,18 @@ class Cursor {
         return `<div class="timescale-cursor"></div>`;
     }
     set(to) {
-        this.x = to;
+        this._x = to;
         this.$element.style.opacity = 1;
-        this.$element.style.left = `${this.x}%`;
+        this.$element.style.left = `${this._x}%`;
     }
     move(to) {
         this.$element.style.opacity = 1;
-        this.$element.style.left = `${this.x + to}%`;
+        this.$element.style.left = `${this._x + to}%`;
     }
     reset(to) {
-        this.x = to;
+        this._x = to;
         this.$element.style.opacity = 0;
-        this.$element.style.left = `${this.x}%`;
+        this.$element.style.left = `${this._x}%`;
     }
 }
 exports.default = Cursor;
@@ -4771,13 +4798,13 @@ class Reset {
     }
     init() {
         this.render();
-        this.initEventListeners();
+        this._initEventListeners();
     }
     render() {
         let template = this.template;
         this.$element = (0, _dom.createElement)(template);
     }
-    initEventListeners() {
+    _initEventListeners() {
         this.$element.addEventListener("click", this.onClick.bind(this));
     }
     onClick() {

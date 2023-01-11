@@ -8,14 +8,15 @@ import { createElement } from '../../core/dom';
 import { secToTime, msFromDate, hoursOnScale, round } from '../../core/utils/';
 
 class Cells {
-  $element;
-  _zoomValue;
   _data;
+  _zoomValue;
+  $element;
 
-  constructor(data = {}, observer) {
+  constructor({ data = {} }, observer) {
     this.value = data;
     this._zoomValue = 1;
     this.observer = observer;
+
     this.init();
   }
 
@@ -29,7 +30,7 @@ class Cells {
 
   init() {
     this.render();
-    this._initBack(this.$element.firstElementChild); // back layer relevant for showing progress
+    this._initBack(); // back layer relevant for showing progress
     this._initEventListeners();
     this._initResizeObserver();
   }
@@ -68,10 +69,6 @@ class Cells {
           </div>
         `;
 
-        if (!index) {
-          this._left = left;
-        }
-
         return template;
       }, '');
     });
@@ -83,7 +80,7 @@ class Cells {
     Background
   */
 
-  _initBack($element) {
+  _initBack($element = this.$firstCell) {
     let template = `<div class="timescale-cell-back"></div>`;
     if (this.$back) {
       this.$back.remove();
@@ -230,7 +227,11 @@ class Cells {
   }
 
   get borderLeft() {
-    return this._left;
+    return parseFloat(this.$firstCell.style.left.slice(0, -1));
+  }
+
+  get $firstCell() {
+    return this.$element.firstElementChild;
   }
 }
 

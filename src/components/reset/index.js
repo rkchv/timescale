@@ -15,7 +15,7 @@ class Reset {
 
   init() {
     this.render();
-    this.initEventListeners();
+    this._initEventListeners();
   }
 
   render() {
@@ -23,7 +23,7 @@ class Reset {
     this.$element = createElement(template);
   }
 
-  initEventListeners() {
+  _initEventListeners() {
     this.$element.addEventListener('click', this.onClick.bind(this));
   }
 

@@ -51,7 +51,7 @@ export const msFromDate = date => {
   return hours + minutes + seconds + ms;
 };
 
-export const getTranslate = item => {
+export const translation = item => {
   const transArr = [];
   if (!window.getComputedStyle) {
     return;

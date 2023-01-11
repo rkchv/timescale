@@ -6,13 +6,25 @@ import { createElement } from '../../core/dom';
 import { round, hoursOnScale } from '../../core/utils/';
 
 class Ticks {
+  _data;
+  _perHour;
+  step;
   $element;
 
   constructor({ data = {}, step = 2, perHour = 4 }) {
-    this.data = data;
-    this.perHour = perHour;
-    this.step = step;
+    this.value = data;
+    this._perHour = perHour;
+    this._step = step;
+
     this.init();
+  }
+
+  set value(data) {
+    this._data = Object.freeze(data);
+  }
+
+  get value() {
+    return Object.freeze(this._data);
   }
 
   init() {
@@ -41,21 +53,21 @@ class Ticks {
   }
 
   zoom(level) {
-    this.step = 1;
+    this._step = 1;
     if (level > 8) {
-      this.perHour = 16;
+      this._perHour = 16;
     }
     this.$element.innerHTML = this.ticks;
   }
 
   zoomReset() {
-    this.step = 2;
-    this.perHour = 4;
+    this._step = 2;
+    this._perHour = 4;
     this.$element.innerHTML = this.ticks;
   }
 
   update(data) {
-    this.data = data;
+    this.value = data;
     this.$element.innerHTML = this.ticks;
   }
 
@@ -69,11 +81,11 @@ class Ticks {
       return 'big';
     }
 
-    if (index % (24 * this.perHour) === 0) {
+    if (index % (24 * this._perHour) === 0) {
       return 'big shift';
     }
 
-    if (index % (this.step * this.perHour) === 0) {
+    if (index % (this._step * this._perHour) === 0) {
       return 'middle';
     }
 
@@ -81,11 +93,12 @@ class Ticks {
   }
 
   get count() {
-    return this.hours * this.perHour;
+    return this.hours * this._perHour;
   }
 
   get hours() {
-    return hoursOnScale({ ...this.data });
+    let data = { ...this.value };
+    return hoursOnScale(data);
   }
 }
 
