@@ -90,10 +90,10 @@ class Timescale {
   }
 
   _initEventListeners() {
-    this._registerObserverEvent('move', this.moveScale.bind(this));
-    this._registerObserverEvent('zoom', this.zoomScale.bind(this));
-    this._registerObserverEvent('reset', this.zoomReset.bind(this));
-    this._registerObserverEvent('cursor', this.setCursor.bind(this));
+    this._registerObserverEvent('_move', this.moveScale.bind(this));
+    this._registerObserverEvent('_zoom', this.zoomScale.bind(this));
+    this._registerObserverEvent('_reset', this.zoomReset.bind(this));
+    this._registerObserverEvent('_cursor', this.setCursor.bind(this));
   }
 
   _renderComponents() {
@@ -155,18 +155,50 @@ class Timescale {
 
   update(data) {
     this.value = data;
-    let newState = { ...this.value };
+    let newData = { ...this.value };
 
     this.$scale.style.width = `${this.width}%`;
-    this._components.cells.update(newState);
-    this._components.ticks.update(newState);
-    this._components.times.update(newState);
+    this._components.cells.update(newData);
+    this._components.ticks.update(newData);
+    this._components.times.update(newData);
 
     let to = this._components.cells.borderLeft;
-    this._components.cursor.reset(to);
+    this._components.cursor.set(to, 0);
   }
 
-  destroy() {}
+  destroy() {
+    this.value = null;
+
+    for (const component of Object.values(this._components)) {
+      if (component.destroy) {
+        component.destroy();
+      }
+    }
+
+    this._components = null;
+
+    for (const element of Object.values(this._subElements)) {
+      element.remove();
+    }
+
+    this._subElements = null;
+
+    for (let [key, value] of this._subscriptions) {
+      this._subscriptions.get(key)();
+      this._subscriptions.delete(key);
+    }
+
+    this._subscriptions = null;
+
+    this.observer = null;
+
+    this.$scale.remove();
+    this.$scale = null;
+    this.$element.remove();
+    this.$element = null;
+
+    this.$root = null;
+  }
 }
 
 export default connectToObserver(Timescale);

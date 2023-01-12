@@ -27,9 +27,9 @@ class Cursor {
     return `<div class="timescale-cursor"></div>`;
   }
 
-  set(to) {
+  set(to, opacity = 1) {
     this._x = to;
-    this.$element.style.opacity = 1;
+    this.$element.style.opacity = opacity;
     this.$element.style.left = `${this._x}%`;
   }
 
@@ -38,10 +38,10 @@ class Cursor {
     this.$element.style.left = `${this._x + to}%`;
   }
 
-  reset(to) {
-    this._x = to;
-    this.$element.style.opacity = 0;
-    this.$element.style.left = `${this._x}%`;
+  destroy() {
+    this._x = null;
+    this.$element.remove();
+    this.$element = null;
   }
 }
 

@@ -2,8 +2,6 @@
  * @format
  */
 
-const document = globalThis.document;
-
 export const createElement = (template = '') => {
   const wrapper = document.createElement('div');
   wrapper.innerHTML = template;
@@ -44,9 +42,3 @@ export const removeEventListener = (
 ) => {
   element.removeEventListener(eventName, listener, options);
 };
-
-// export const DOM = {
-//   window: globalThis.window,
-//   document: globalThis.window.document,
-//   body: globalThis.window.document.body,
-// };

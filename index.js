@@ -20,7 +20,6 @@ player.on('timeupdate', event => {
 });
 
 // Timescale
-//
 let element = document.getElementById('timescale');
 let timescale = new Timescale(element, data);
 
@@ -39,4 +38,9 @@ function play(e) {
 }
 
 // updating
-// timescale.update(data2);
+// setTimeout(() => {
+//   timescale.update(data2);
+// }, 5000);
+
+// destroy
+// timescale.destroy();

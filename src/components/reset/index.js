@@ -28,7 +28,7 @@ class Reset {
   }
 
   onClick() {
-    this.observer.dispatchEvent({ type: 'reset' });
+    this.observer.dispatchEvent({ type: '_reset' });
   }
 
   get template() {
@@ -41,6 +41,12 @@ class Reset {
 
   hide() {
     this.$element.classList.add('disabled');
+  }
+
+  destroy() {
+    this.$element.remove();
+    this.$element = null;
+    this.observer = null;
   }
 }
 

@@ -11,6 +11,7 @@ class Cells {
   _data;
   _zoomValue;
   $element;
+  $back;
 
   constructor({ data = {} }, observer) {
     this.value = data;
@@ -31,8 +32,9 @@ class Cells {
   init() {
     this.render();
     this._initBack(); // back layer relevant for showing progress
-    this._initEventListeners();
     this._initResizeObserver();
+    this._bind();
+    this._initEventListeners();
   }
 
   /*
@@ -119,9 +121,14 @@ class Cells {
     Listeners
   */
 
+  _bind() {
+    this.onClick = this.onClick.bind(this);
+    this.onDoubleClick = this.onDoubleClick.bind(this);
+  }
+
   _initEventListeners() {
-    this.$element.addEventListener('click', this.onClick.bind(this));
-    this.$element.addEventListener('dblclick', this.onDoubleClick.bind(this));
+    this.$element.addEventListener('click', this.onClick);
+    this.$element.addEventListener('dblclick', this.onDoubleClick);
   }
 
   onClick(e) {
@@ -133,7 +140,7 @@ class Cells {
     this._timer = setTimeout(() => {
       this._initBack(target);
       this.observer.dispatchEvent({ type: 'cell.click', payload: event });
-      this.observer.dispatchEvent({ type: 'cursor', payload: to });
+      this.observer.dispatchEvent({ type: '_cursor', payload: to });
     }, 200);
   }
 
@@ -169,7 +176,7 @@ class Cells {
 
   _zoom(width, level, tranlateTo) {
     this.observer.dispatchEvent({
-      type: 'zoom',
+      type: '_zoom',
       payload: { width, level, tranlateTo },
     });
   }
@@ -232,6 +239,27 @@ class Cells {
 
   get $firstCell() {
     return this.$element.firstElementChild;
+  }
+
+  destroy() {
+    this.value = null;
+    this._zoomValue = null;
+
+    this.$back.remove();
+    this.$back = null;
+
+    this.observer = null;
+    this.risizeObserver.disconnect();
+    this.risizeObserver = null;
+
+    this.$element.removeEventListener('click', this.onClick);
+    this.$element.removeEventListener('dblclick', this.onDoubleClick);
+
+    this.onClick = null;
+    this.onDoubleClick = null;
+
+    this.$element.remove();
+    this.$element = null;
   }
 }
 

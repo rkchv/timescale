@@ -5,10 +5,5 @@
 
 2. Работа с часовыми поясами
 
-To do
-
-Private variables
-Private event catchnig
-Destroy
-Удалить неиспользуемые геттеры и сделать консистенси в названиях ($)
 Safari, Mozilla, Edge проверить
+Сборка

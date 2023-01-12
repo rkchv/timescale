@@ -8,7 +8,7 @@ import { round, hoursOnScale } from '../../core/utils/';
 class Ticks {
   _data;
   _perHour;
-  step;
+  _step;
   $element;
 
   constructor({ data = {}, step = 2, perHour = 4 }) {
@@ -99,6 +99,14 @@ class Ticks {
   get hours() {
     let data = { ...this.value };
     return hoursOnScale(data);
+  }
+
+  destroy() {
+    this.value = null;
+    this._perHour = null;
+    this._step = null;
+    this.$element.remove();
+    this.$element = null;
   }
 }
 

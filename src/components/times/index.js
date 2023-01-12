@@ -133,7 +133,7 @@ class Times {
       this._tranlateTo = 0;
     }
 
-    this.observer.dispatchEvent({ type: 'move', payload: this._tranlateTo });
+    this.observer.dispatchEvent({ type: '_move', payload: this._tranlateTo });
   }
 
   onMouseUp() {
@@ -164,6 +164,27 @@ class Times {
   get hours() {
     let data = { ...this.value };
     return hoursOnScale(data);
+  }
+
+  destroy() {
+    this.value = null;
+    this._step = null;
+    this._x = null;
+    this._translateFrom = null;
+    this._tranlateTo = null;
+
+    this.observer = null;
+
+    this.$element.removeEventListener('mousedown', this.onMouseDown);
+    this.$element.removeEventListener('dragstart', () => false);
+    document.removeEventListener('mouseup', this.onMouseUp);
+
+    this.onMouseDown = null;
+    this.onMouseUp = null;
+    this.onMouseMove = null;
+
+    this.$element.remove();
+    this.$element = null;
   }
 }
 

@@ -549,7 +549,6 @@ player.on("timeupdate", (event)=>{
     timescale.moveCursor(instance.currentTime);
 });
 // Timescale
-//
 let element = document.getElementById("timescale");
 let timescale = new (0, _Default.default)(element, (0, _mock.data));
 timescale.on("cell.click", play);
@@ -570,7 +569,11 @@ function play(e) {
     };
     player.play();
 } // updating
- // timescale.update(data2);
+ // setTimeout(() => {
+ //   timescale.update(data2);
+ // }, 5000);
+ // destroy
+ // timescale.destroy();
 
 },{"plyr":"aqcBy","plyr/dist/plyr.css":"cTDKJ","./src/":"8lqZg","./api/mock":"6drfj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aqcBy":[function(require,module,exports) {
 var global = arguments[3];
@@ -4083,10 +4086,10 @@ class Timescale {
         };
     }
     _initEventListeners() {
-        this._registerObserverEvent("move", this.moveScale.bind(this));
-        this._registerObserverEvent("zoom", this.zoomScale.bind(this));
-        this._registerObserverEvent("reset", this.zoomReset.bind(this));
-        this._registerObserverEvent("cursor", this.setCursor.bind(this));
+        this._registerObserverEvent("_move", this.moveScale.bind(this));
+        this._registerObserverEvent("_zoom", this.zoomScale.bind(this));
+        this._registerObserverEvent("_reset", this.zoomReset.bind(this));
+        this._registerObserverEvent("_cursor", this.setCursor.bind(this));
     }
     _renderComponents() {
         for (const component of Object.keys(this._components)){
@@ -4137,17 +4140,34 @@ class Timescale {
     }
     update(data) {
         this.value = data;
-        let newState = {
+        let newData = {
             ...this.value
         };
         this.$scale.style.width = `${this.width}%`;
-        this._components.cells.update(newState);
-        this._components.ticks.update(newState);
-        this._components.times.update(newState);
+        this._components.cells.update(newData);
+        this._components.ticks.update(newData);
+        this._components.times.update(newData);
         let to = this._components.cells.borderLeft;
-        this._components.cursor.reset(to);
+        this._components.cursor.set(to, 0);
     }
-    destroy() {}
+    destroy() {
+        this.value = null;
+        for (const component of Object.values(this._components))if (component.destroy) component.destroy();
+        this._components = null;
+        for (const element of Object.values(this._subElements))element.remove();
+        this._subElements = null;
+        for (let [key, value] of this._subscriptions){
+            this._subscriptions.get(key)();
+            this._subscriptions.delete(key);
+        }
+        this._subscriptions = null;
+        this.observer = null;
+        this.$scale.remove();
+        this.$scale = null;
+        this.$element.remove();
+        this.$element = null;
+        this.$root = null;
+    }
 }
 exports.default = (0, _connectDefault.default)(Timescale);
 
@@ -4238,7 +4258,6 @@ parcelHelpers.export(exports, "createElement", ()=>createElement);
 parcelHelpers.export(exports, "getSubElements", ()=>getSubElements);
 parcelHelpers.export(exports, "addEventListener", ()=>addEventListener);
 parcelHelpers.export(exports, "removeEventListener", ()=>removeEventListener);
-const document = globalThis.document;
 const createElement = (template = "")=>{
     const wrapper = document.createElement("div");
     wrapper.innerHTML = template;
@@ -4261,34 +4280,18 @@ const addEventListener = (element, eventName = "", listener, options = {})=>{
 };
 const removeEventListener = (element, eventName = "", listener, options = {})=>{
     element.removeEventListener(eventName, listener, options);
-}; // export const DOM = {
- //   window: globalThis.window,
- //   document: globalThis.window.document,
- //   body: globalThis.window.document.body,
- // };
+};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4X1EK":[function(require,module,exports) {
 /**
  * @format
  */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "trim", ()=>trim);
 parcelHelpers.export(exports, "round", ()=>round);
 parcelHelpers.export(exports, "secToTime", ()=>secToTime);
 parcelHelpers.export(exports, "msFromDate", ()=>msFromDate);
 parcelHelpers.export(exports, "translation", ()=>translation);
 parcelHelpers.export(exports, "hoursOnScale", ()=>hoursOnScale);
-const trim = (strings, ...values)=>{
-    let output = "";
-    for(let i = 0; i < values.length; i++)output += strings[i] + values[i];
-    output += strings[values.length];
-    // Split on newlines.
-    let lines = output.split(/(?:\r\n|\n|\r)/);
-    // Rip out the leading whitespace.
-    return lines.map((line)=>{
-        return line.replace(/^\s+/gm, "");
-    }).join(" ").trim();
-};
 const round = (number, count = 2)=>{
     return Math.ceil(number * Math.pow(10, count)) / Math.pow(10, count);
 };
@@ -4352,6 +4355,7 @@ class Cells {
     _data;
     _zoomValue;
     $element;
+    $back;
     constructor({ data ={}  }, observer){
         this.value = data;
         this._zoomValue = 1;
@@ -4367,8 +4371,9 @@ class Cells {
     init() {
         this.render();
         this._initBack(); // back layer relevant for showing progress
-        this._initEventListeners();
         this._initResizeObserver();
+        this._bind();
+        this._initEventListeners();
     }
     /*
     Render
@@ -4428,9 +4433,13 @@ class Cells {
     }
     /*
     Listeners
-  */ _initEventListeners() {
-        this.$element.addEventListener("click", this.onClick.bind(this));
-        this.$element.addEventListener("dblclick", this.onDoubleClick.bind(this));
+  */ _bind() {
+        this.onClick = this.onClick.bind(this);
+        this.onDoubleClick = this.onDoubleClick.bind(this);
+    }
+    _initEventListeners() {
+        this.$element.addEventListener("click", this.onClick);
+        this.$element.addEventListener("dblclick", this.onDoubleClick);
     }
     onClick(e) {
         if (e.detail !== 1 || !e.target.dataset.id) return;
@@ -4444,7 +4453,7 @@ class Cells {
                 payload: event
             });
             this.observer.dispatchEvent({
-                type: "cursor",
+                type: "_cursor",
                 payload: to
             });
         }, 200);
@@ -4466,7 +4475,7 @@ class Cells {
     }
     _zoom(width, level, tranlateTo) {
         this.observer.dispatchEvent({
-            type: "zoom",
+            type: "_zoom",
             payload: {
                 width,
                 level,
@@ -4521,6 +4530,21 @@ class Cells {
     get $firstCell() {
         return this.$element.firstElementChild;
     }
+    destroy() {
+        this.value = null;
+        this._zoomValue = null;
+        this.$back.remove();
+        this.$back = null;
+        this.observer = null;
+        this.risizeObserver.disconnect();
+        this.risizeObserver = null;
+        this.$element.removeEventListener("click", this.onClick);
+        this.$element.removeEventListener("dblclick", this.onDoubleClick);
+        this.onClick = null;
+        this.onDoubleClick = null;
+        this.$element.remove();
+        this.$element = null;
+    }
 }
 exports.default = (0, _connectDefault.default)(Cells);
 
@@ -4534,7 +4558,7 @@ var _ = require("../../core/utils/");
 class Ticks {
     _data;
     _perHour;
-    step;
+    _step;
     $element;
     constructor({ data ={} , step =2 , perHour =4  }){
         this.value = data;
@@ -4602,6 +4626,13 @@ class Ticks {
             ...this.value
         };
         return (0, _.hoursOnScale)(data);
+    }
+    destroy() {
+        this.value = null;
+        this._perHour = null;
+        this._step = null;
+        this.$element.remove();
+        this.$element = null;
     }
 }
 exports.default = Ticks;
@@ -4709,7 +4740,7 @@ class Times {
         if (x <= -this.maxOffset) this._tranlateTo = -this.maxOffset;
         if (x >= 0) this._tranlateTo = 0;
         this.observer.dispatchEvent({
-            type: "move",
+            type: "_move",
             payload: this._tranlateTo
         });
     }
@@ -4738,6 +4769,22 @@ class Times {
         };
         return (0, _.hoursOnScale)(data);
     }
+    destroy() {
+        this.value = null;
+        this._step = null;
+        this._x = null;
+        this._translateFrom = null;
+        this._tranlateTo = null;
+        this.observer = null;
+        this.$element.removeEventListener("mousedown", this.onMouseDown);
+        this.$element.removeEventListener("dragstart", ()=>false);
+        document.removeEventListener("mouseup", this.onMouseUp);
+        this.onMouseDown = null;
+        this.onMouseUp = null;
+        this.onMouseMove = null;
+        this.$element.remove();
+        this.$element = null;
+    }
 }
 exports.default = (0, _connectDefault.default)(Times);
 
@@ -4765,19 +4812,19 @@ class Cursor {
     get template() {
         return `<div class="timescale-cursor"></div>`;
     }
-    set(to) {
+    set(to, opacity = 1) {
         this._x = to;
-        this.$element.style.opacity = 1;
+        this.$element.style.opacity = opacity;
         this.$element.style.left = `${this._x}%`;
     }
     move(to) {
         this.$element.style.opacity = 1;
         this.$element.style.left = `${this._x + to}%`;
     }
-    reset(to) {
-        this._x = to;
-        this.$element.style.opacity = 0;
-        this.$element.style.left = `${this._x}%`;
+    destroy() {
+        this._x = null;
+        this.$element.remove();
+        this.$element = null;
     }
 }
 exports.default = Cursor;
@@ -4809,7 +4856,7 @@ class Reset {
     }
     onClick() {
         this.observer.dispatchEvent({
-            type: "reset"
+            type: "_reset"
         });
     }
     get template() {
@@ -4820,6 +4867,11 @@ class Reset {
     }
     hide() {
         this.$element.classList.add("disabled");
+    }
+    destroy() {
+        this.$element.remove();
+        this.$element = null;
+        this.observer = null;
     }
 }
 exports.default = (0, _connectDefault.default)(Reset);
