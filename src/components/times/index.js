@@ -87,12 +87,12 @@ class Times {
     if (index / labelsPerDay > 1) {
       let rest = index % labelsPerDay;
       let seconds = rest * this._step * 3600;
-      return secToTime(seconds).slice(0, -3);
+      return secToTime(seconds, true);
     }
 
     let seconds = index * this._step * 3600;
 
-    return secToTime(seconds).slice(0, -3);
+    return secToTime(seconds, true);
   }
 
   get count() {

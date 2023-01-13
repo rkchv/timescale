@@ -951,7 +951,7 @@ a.plyr__control {
   aspect-ratio: 16 / 9;
 }
 
-@supports not (aspect-ratio:16/9) {
+@supports not (aspect-ratio: 16/9) {
   .plyr__video-embed, .plyr__video-wrapper--fixed-ratio {
     height: 0;
     padding-bottom: 56.25%;

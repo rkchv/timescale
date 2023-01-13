@@ -4295,7 +4295,7 @@ parcelHelpers.export(exports, "hoursOnScale", ()=>hoursOnScale);
 const round = (number, count = 2)=>{
     return Math.ceil(number * Math.pow(10, count)) / Math.pow(10, count);
 };
-const secToTime = (timeInSeconds)=>{
+const secToTime = (timeInSeconds, times = false)=>{
     let pad = function(num, size) {
         return ("000" + num).slice(size * -1);
     };
@@ -4304,6 +4304,7 @@ const secToTime = (timeInSeconds)=>{
     let minutes = Math.floor(time / 60) % 60;
     let seconds = Math.floor(time - minutes * 60);
     let milliseconds = time.slice(-3);
+    if (times) return pad(hours, 2) + ":" + pad(minutes, 2);
     if (hours > 0) return pad(hours, 2) + ":" + pad(minutes, 2) + ":" + pad(seconds, 2);
     return pad(minutes, 2) + ":" + pad(seconds, 2);
 };
@@ -4710,10 +4711,10 @@ class Times {
         if (index / labelsPerDay > 1) {
             let rest = index % labelsPerDay;
             let seconds = rest * this._step * 3600;
-            return (0, _.secToTime)(seconds).slice(0, -3);
+            return (0, _.secToTime)(seconds, true);
         }
         let seconds1 = index * this._step * 3600;
-        return (0, _.secToTime)(seconds1).slice(0, -3);
+        return (0, _.secToTime)(seconds1, true);
     }
     get count() {
         return this.hours / this._step;

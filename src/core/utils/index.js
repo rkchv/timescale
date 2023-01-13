@@ -6,7 +6,8 @@ export const round = (number, count = 2) => {
   return Math.ceil(number * Math.pow(10, count)) / Math.pow(10, count);
 };
 
-export const secToTime = timeInSeconds => {
+// Need to refactor
+export const secToTime = (timeInSeconds, times = false) => {
   let pad = function (num, size) {
     return ('000' + num).slice(size * -1);
   };
@@ -16,6 +17,10 @@ export const secToTime = timeInSeconds => {
   let minutes = Math.floor(time / 60) % 60;
   let seconds = Math.floor(time - minutes * 60);
   let milliseconds = time.slice(-3);
+
+  if (times) {
+    return pad(hours, 2) + ':' + pad(minutes, 2);
+  }
 
   if (hours > 0) {
     return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2);
