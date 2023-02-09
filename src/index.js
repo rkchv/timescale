@@ -57,13 +57,12 @@ class Timescale {
   get template() {
     return `
       <div class="timescale-wrapper">
-        <div class="timescale-scale" style="width: ${this.width}%">
+        <div class="timescale-scale" style="width: 100%">
           <div data-element="cells"></div>
           <div data-element="ticks"></div>
           <div data-element="times"></div>
           <div data-element="cursor"></div>
         </div>
-        <div data-element="reset"></div>
       </div>
     `;
   }
@@ -84,9 +83,8 @@ class Timescale {
     let ticks = new Ticks({ data });
     let times = new Times({ data });
     let cursor = new Cursor({ x: cells.borderLeft });
-    let reset = new Reset();
 
-    this._components = { cells, ticks, times, cursor, reset };
+    this._components = { cells, ticks, times, cursor };
   }
 
   _initEventListeners() {
@@ -131,20 +129,18 @@ class Timescale {
     this.$scale.style.transform = `translateX(${round(tranlateTo)}%)`;
     this._components.ticks.zoom(level);
     this._components.times.zoom(level);
-    this._components.reset.show();
   }
 
   zoomReset() {
-    this.$scale.style.width = `${this.width}%`;
+    this.$scale.style.width = `100%`;
     this.$scale.style.transform = `translateX(0)`;
     this._components.cells.zoomReset();
     this._components.ticks.zoomReset();
     this._components.times.zoomReset();
-    this._components.reset.hide();
   }
 
-  setCursor(to) {
-    this._components.cursor.set(to);
+  setCursor(to, opacity = 1) {
+    this._components.cursor.set(to, opacity);
   }
 
   moveCursor(time) {
@@ -153,17 +149,22 @@ class Timescale {
     this._components.cells.setBack(to);
   }
 
+  switchToCell(id) {
+    let newPos = this._components.cells.set(id);
+    this.setCursor(newPos, 0);
+  }
+
   update(data) {
     this.value = data;
     let newData = { ...this.value };
 
-    this.$scale.style.width = `${this.width}%`;
+    this.$scale.style.width = `100%`;
     this._components.cells.update(newData);
     this._components.ticks.update(newData);
     this._components.times.update(newData);
 
     let to = this._components.cells.borderLeft;
-    this._components.cursor.set(to, 0);
+    this.setCursor(to, 0);
   }
 
   destroy() {

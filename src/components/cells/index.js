@@ -127,6 +127,7 @@ class Cells {
   }
 
   _initEventListeners() {
+    var cells = this.$element.getElementsByClassName('timescale-cell');
     this.$element.addEventListener('click', this.onClick);
     this.$element.addEventListener('dblclick', this.onDoubleClick);
   }
@@ -184,6 +185,12 @@ class Cells {
   /*
     Public
   */
+
+  set(id) {
+    let target = this.$element.querySelector(`[data-id="${id}"]`);
+    this._initBack(target);
+    return Number(target.style.left.slice(0, -1));
+  }
 
   update(data) {
     this.value = data;

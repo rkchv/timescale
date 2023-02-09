@@ -44,7 +44,7 @@ body {
   &-ticks {
     width: 100%;
     height: 100%;
-    background-color: #ececec;
+    background-color: #f8f8f8;
   }
 
   &-tick {
@@ -52,7 +52,7 @@ body {
     bottom: 0;
     width: 1px;
     height: 12px;
-    background-color: #D2D3D5;
+    background-color: #d2d3d5;
 
     &.middle {
       height: 50%;
@@ -60,7 +60,8 @@ body {
 
     &.big {
       height: 100%;
-      background-color: red;
+      background-color: #e8e8e8;
+      width: 2px;
 
       &.shift {
         transform: translateX(-1px);
@@ -98,7 +99,7 @@ body {
     font-size: 12px;
     font-weight: 500;
     font-family: "Noto Sans";
-    color: gray;
+    color: #6D6E70;
     transform: translate(-50%, 50%);
     user-select: none;
     pointer-events: none;

@@ -142,7 +142,7 @@
       this[globalName] = mainExports;
     }
   }
-})({"awEvQ":[function(require,module,exports) {
+})({"8BXtR":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
@@ -158,7 +158,7 @@ import type {
 interface ParcelRequire {
   (string): mixed;
   cache: {|[string]: ParcelModule|};
-  hotData: mixed;
+  hotData: {|[string]: mixed|};
   Module: any;
   parent: ?ParcelRequire;
   isParcelRequire: true;
@@ -200,7 +200,7 @@ var OldModule = module.bundle.Module;
 function Module(moduleName) {
     OldModule.call(this, moduleName);
     this.hot = {
-        data: module.bundle.hotData,
+        data: module.bundle.hotData[moduleName],
         _acceptCallbacks: [],
         _disposeCallbacks: [],
         accept: function(fn) {
@@ -210,10 +210,11 @@ function Module(moduleName) {
             this._disposeCallbacks.push(fn);
         }
     };
-    module.bundle.hotData = undefined;
+    module.bundle.hotData[moduleName] = undefined;
 }
 module.bundle.Module = Module;
-var checkedAssets, acceptedAssets, assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
+module.bundle.hotData = {};
+var checkedAssets, assetsToDispose, assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
 function getHostname() {
     return HMR_HOST || (location.protocol.indexOf("http") === 0 ? location.hostname : "localhost");
 }
@@ -236,8 +237,8 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
     } // $FlowFixMe
     ws.onmessage = async function(event) {
         checkedAssets = {} /*: {|[string]: boolean|} */ ;
-        acceptedAssets = {} /*: {|[string]: boolean|} */ ;
         assetsToAccept = [];
+        assetsToDispose = [];
         var data = JSON.parse(event.data);
         if (data.type === "update") {
             // Remove error overlay if there is one
@@ -249,10 +250,22 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
             if (handled) {
                 console.clear(); // Dispatch custom event so other runtimes (e.g React Refresh) are aware.
                 if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("parcelhmraccept"));
-                await hmrApplyUpdates(assets);
-                for(var i = 0; i < assetsToAccept.length; i++){
-                    var id = assetsToAccept[i][1];
-                    if (!acceptedAssets[id]) hmrAcceptRun(assetsToAccept[i][0], id);
+                await hmrApplyUpdates(assets); // Dispose all old assets.
+                let processedAssets = {} /*: {|[string]: boolean|} */ ;
+                for(let i = 0; i < assetsToDispose.length; i++){
+                    let id = assetsToDispose[i][1];
+                    if (!processedAssets[id]) {
+                        hmrDispose(assetsToDispose[i][0], id);
+                        processedAssets[id] = true;
+                    }
+                } // Run accept callbacks. This will also re-execute other disposed assets in topological order.
+                processedAssets = {};
+                for(let i = 0; i < assetsToAccept.length; i++){
+                    let id = assetsToAccept[i][1];
+                    if (!processedAssets[id]) {
+                        hmrAccept(assetsToAccept[i][0], id);
+                        processedAssets[id] = true;
+                    }
                 }
             } else fullReload();
         }
@@ -505,30 +518,42 @@ function hmrAcceptCheckOne(bundle, id, depsByBundle) {
     if (checkedAssets[id]) return true;
     checkedAssets[id] = true;
     var cached = bundle.cache[id];
-    assetsToAccept.push([
+    assetsToDispose.push([
         bundle,
         id
     ]);
-    if (!cached || cached.hot && cached.hot._acceptCallbacks.length) return true;
+    if (!cached || cached.hot && cached.hot._acceptCallbacks.length) {
+        assetsToAccept.push([
+            bundle,
+            id
+        ]);
+        return true;
+    }
 }
-function hmrAcceptRun(bundle, id) {
+function hmrDispose(bundle, id) {
     var cached = bundle.cache[id];
-    bundle.hotData = {};
-    if (cached && cached.hot) cached.hot.data = bundle.hotData;
+    bundle.hotData[id] = {};
+    if (cached && cached.hot) cached.hot.data = bundle.hotData[id];
     if (cached && cached.hot && cached.hot._disposeCallbacks.length) cached.hot._disposeCallbacks.forEach(function(cb) {
-        cb(bundle.hotData);
+        cb(bundle.hotData[id]);
     });
     delete bundle.cache[id];
-    bundle(id);
-    cached = bundle.cache[id];
+}
+function hmrAccept(bundle, id) {
+    // Execute the module.
+    bundle(id); // Run the accept callbacks in the new version of the module.
+    var cached = bundle.cache[id];
     if (cached && cached.hot && cached.hot._acceptCallbacks.length) cached.hot._acceptCallbacks.forEach(function(cb) {
         var assetsToAlsoAccept = cb(function() {
             return getParents(module.bundle.root, id);
         });
-        if (assetsToAlsoAccept && assetsToAccept.length) // $FlowFixMe[method-unbinding]
-        assetsToAccept.push.apply(assetsToAccept, assetsToAlsoAccept);
+        if (assetsToAlsoAccept && assetsToAccept.length) {
+            assetsToAlsoAccept.forEach(function(a) {
+                hmrDispose(a[0], a[1]);
+            }); // $FlowFixMe[method-unbinding]
+            assetsToAccept.push.apply(assetsToAccept, assetsToAlsoAccept);
+        }
     });
-    acceptedAssets[id] = true;
 }
 
 },{}],"bB7Pu":[function(require,module,exports) {
@@ -538,20 +563,40 @@ function hmrAcceptRun(bundle, id) {
 var _plyr = require("plyr");
 var _plyrDefault = parcelHelpers.interopDefault(_plyr);
 var _plyrCss = require("plyr/dist/plyr.css");
-var _ = require("./src/");
-var _Default = parcelHelpers.interopDefault(_);
+var _index = require("./src/index");
+var _indexDefault = parcelHelpers.interopDefault(_index);
 var _mock = require("./api/mock");
-// -------------------------------
 // Player
 let player = new (0, _plyrDefault.default)(document.getElementById("player"));
 player.on("timeupdate", (event)=>{
     const instance = event.detail.plyr;
     timescale.moveCursor(instance.currentTime);
 });
+player.on("ended", (event)=>{
+    const instance = event.detail.plyr;
+    for (let value of Object.values((0, _mock.data)))value.forEach((element, index)=>{
+        if (element.url === instance.source) {
+            if (index === value.length) return;
+            let nextIndex = index + 1;
+            timescale.switchToCell(value[nextIndex].id);
+            player.source = {
+                type: "video",
+                sources: [
+                    {
+                        src: value[nextIndex].url,
+                        type: "video/mp4"
+                    }
+                ]
+            };
+            player.play();
+        }
+    });
+});
 // Timescale
 let element = document.getElementById("timescale");
-let timescale = new (0, _Default.default)(element, (0, _mock.data));
+let timescale = new (0, _indexDefault.default)(element, (0, _mock.data));
 timescale.on("cell.click", play);
+// ------------------
 function play(e) {
     var id = e.target.dataset.id || null;
     if (!id) return;
@@ -568,14 +613,12 @@ function play(e) {
         ]
     };
     player.play();
-} // updating
- // setTimeout(() => {
+} // setTimeout(() => {
  //   timescale.update(data2);
  // }, 5000);
- // destroy
  // timescale.destroy();
 
-},{"plyr":"aqcBy","plyr/dist/plyr.css":"cTDKJ","./src/":"8lqZg","./api/mock":"6drfj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aqcBy":[function(require,module,exports) {
+},{"plyr":"aqcBy","plyr/dist/plyr.css":"cTDKJ","./src/index":"8lqZg","./api/mock":"6drfj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aqcBy":[function(require,module,exports) {
 var global = arguments[3];
 "object" == typeof navigator && function(e, t) {
     module.exports = t();
@@ -765,7 +808,7 @@ var global = arguments[3];
         e.startsWith("http://") && e.startsWith("https://") || (t = `http://${e}`);
         try {
             return !x(new URL(t).hostname);
-        } catch (e1) {
+        } catch (e) {
             return !1;
         }
     }, W = x;
@@ -782,7 +825,7 @@ var global = arguments[3];
         setTimeout(()=>{
             try {
                 e.hidden = !0, e.offsetHeight, e.hidden = !1;
-            } catch (e1) {}
+            } catch (e) {}
         }, t);
     }
     const Y = {
@@ -913,7 +956,7 @@ var global = arguments[3];
             Object.keys(de).includes(i) && (i += `; codecs="${de[e]}"`);
             try {
                 return Boolean(i && this.media.canPlayType(i).replace(/no/, ""));
-            } catch (e1) {
+            } catch (e) {
                 return !1;
             }
         },
@@ -932,7 +975,7 @@ var global = arguments[3];
                 get: ()=>(e = !0, null)
             });
             window.addEventListener("test", null, t), window.removeEventListener("test", null, t);
-        } catch (e1) {}
+        } catch (e) {}
         return e;
     })();
     function ge(e, t, i, s = !1, n = !0, a = !1) {
@@ -1079,10 +1122,10 @@ var global = arguments[3];
         const t = (e)=>Pe(e) ? e.split(":").map(Number) : null;
         let i = t(e);
         if (null === i && (i = t(this.config.ratio)), null === i && !W(this.embed) && D(this.embed.ratio) && ({ ratio: i  } = this.embed), null === i && this.isHTML5) {
-            const { videoWidth: e1 , videoHeight: t1  } = this.media;
+            const { videoWidth: e , videoHeight: t  } = this.media;
             i = [
-                e1,
-                t1
+                e,
+                t
             ];
         }
         return Me(i);
@@ -1093,8 +1136,8 @@ var global = arguments[3];
         if (!D(i)) return {};
         const [s, n] = Me(i), a = 100 / s * n;
         if (Se(`aspect-ratio: ${s}/${n}`) ? t.style.aspectRatio = `${s}/${n}` : t.style.paddingBottom = `${a}%`, this.isVimeo && !this.config.vimeo.premium && this.supported.ui) {
-            const e1 = 100 / this.media.offsetWidth * parseInt(window.getComputedStyle(this.media).paddingBottom, 10), i1 = (e1 - a) / (e1 / 50);
-            this.fullscreen.active ? t.style.paddingBottom = null : this.media.style.transform = `translateY(-${i1}%)`;
+            const e = 100 / this.media.offsetWidth * parseInt(window.getComputedStyle(this.media).paddingBottom, 10), i = (e - a) / (e / 50);
+            this.fullscreen.active ? t.style.paddingBottom = null : this.media.style.transform = `translateY(-${i}%)`;
         } else this.isHTML5 && t.classList.add(this.config.classNames.videoFixedRatio);
         return {
             padding: a,
@@ -1199,7 +1242,7 @@ var global = arguments[3];
                 W(t) && (t = {}), X(t, e);
                 try {
                     window.localStorage.setItem(this.key, JSON.stringify(t));
-                } catch (e1) {}
+                } catch (e) {}
             }), this.enabled = t.config.storage.enabled, this.key = t.config.storage.key;
         }
         static get supported() {
@@ -1207,7 +1250,7 @@ var global = arguments[3];
                 if (!("localStorage" in window)) return !1;
                 const e = "___test";
                 return window.localStorage.setItem(e, e), window.localStorage.removeItem(e), !0;
-            } catch (e1) {
+            } catch (e) {
                 return !1;
             }
         }
@@ -1215,20 +1258,20 @@ var global = arguments[3];
     function Fe(e, t = "text") {
         return new Promise((i, s)=>{
             try {
-                const s1 = new XMLHttpRequest;
-                if (!("withCredentials" in s1)) return;
-                s1.addEventListener("load", ()=>{
+                const s = new XMLHttpRequest;
+                if (!("withCredentials" in s)) return;
+                s.addEventListener("load", ()=>{
                     if ("text" === t) try {
-                        i(JSON.parse(s1.responseText));
+                        i(JSON.parse(s.responseText));
                     } catch (e) {
-                        i(s1.responseText);
+                        i(s.responseText);
                     }
-                    else i(s1.response);
-                }), s1.addEventListener("error", ()=>{
-                    throw new Error(s1.status);
-                }), s1.open("GET", e, !0), s1.responseType = t, s1.send();
-            } catch (e1) {
-                s(e1);
+                    else i(s.response);
+                }), s.addEventListener("error", ()=>{
+                    throw new Error(s.status);
+                }), s.open("GET", e, !0), s.responseType = t, s.send();
+            } catch (e) {
+                s(e);
             }
         });
     }
@@ -1240,21 +1283,21 @@ var global = arguments[3];
             e.innerHTML = t, i && n() || document.body.insertAdjacentElement("afterbegin", e);
         };
         if (!i || !n()) {
-            const n1 = Re.supported, l = document.createElement("div");
-            if (l.setAttribute("hidden", ""), i && l.setAttribute("id", t), n1) {
-                const e1 = window.localStorage.getItem(`cache-${t}`);
-                if (s = null !== e1, s) {
-                    const t1 = JSON.parse(e1);
-                    a(l, t1.content);
+            const n = Re.supported, l = document.createElement("div");
+            if (l.setAttribute("hidden", ""), i && l.setAttribute("id", t), n) {
+                const e = window.localStorage.getItem(`cache-${t}`);
+                if (s = null !== e, s) {
+                    const t = JSON.parse(e);
+                    a(l, t.content);
                 }
             }
             Fe(e).then((e)=>{
                 if (!W(e)) {
-                    if (n1) try {
+                    if (n) try {
                         window.localStorage.setItem(`cache-${t}`, JSON.stringify({
                             content: e
                         }));
-                    } catch (e1) {}
+                    } catch (e) {}
                     a(l, e);
                 }
             }).catch(()=>{});
@@ -1407,10 +1450,10 @@ var global = arguments[3];
             }, t));
             if ("volume" !== e) {
                 i.appendChild(Z("span", null, "0"));
-                const t1 = {
+                const t = {
                     played: "played",
                     buffer: "buffered"
-                }[e], s = t1 ? He.get(t1, this.config) : "";
+                }[e], s = t ? He.get(t, this.config) : "";
                 i.innerText = `% ${s.toLowerCase()}`;
             }
             return this.elements.display[e] = i, i;
@@ -1437,8 +1480,8 @@ var global = arguments[3];
                     "ArrowRight"
                 ].includes(i.key)) We.showMenuPanel.call(this, t, !0);
                 else {
-                    let t1;
-                    "Space" !== i.key && ("ArrowDown" === i.key || s && "ArrowRight" === i.key ? (t1 = e.nextElementSibling, H(t1) || (t1 = e.parentNode.firstElementChild)) : (t1 = e.previousElementSibling, H(t1) || (t1 = e.parentNode.lastElementChild)), ue.call(this, t1, !0));
+                    let t;
+                    "Space" !== i.key && ("ArrowDown" === i.key || s && "ArrowRight" === i.key ? (t = e.nextElementSibling, H(t) || (t = e.parentNode.firstElementChild)) : (t = e.previousElementSibling, H(t) || (t = e.parentNode.lastElementChild)), ue.call(this, t, !0));
                 }
             }, !1), fe.call(this, e, "keyup", (e)=>{
                 "Return" === e.key && We.focusFirstMenuItem.call(this, null, !0);
@@ -1494,8 +1537,8 @@ var global = arguments[3];
                 const i = $(t) ? t : 0, s = H(e) ? e : this.elements.display.buffer;
                 if (H(s)) {
                     s.value = i;
-                    const e1 = s.getElementsByTagName("span")[0];
-                    H(e1) && (e1.childNodes[0].nodeValue = i);
+                    const e = s.getElementsByTagName("span")[0];
+                    H(e) && (e.childNodes[0].nodeValue = i);
                 }
             };
             if (e) switch(e.type){
@@ -1515,11 +1558,11 @@ var global = arguments[3];
             if (H(t) && "range" === t.getAttribute("type")) {
                 if (re(t, this.config.selectors.inputs.seek)) {
                     t.setAttribute("aria-valuenow", this.currentTime);
-                    const e1 = We.formatTime(this.currentTime), i = We.formatTime(this.duration), s = He.get("seekLabel", this.config);
-                    t.setAttribute("aria-valuetext", s.replace("{currentTime}", e1).replace("{duration}", i));
+                    const e = We.formatTime(this.currentTime), i = We.formatTime(this.duration), s = He.get("seekLabel", this.config);
+                    t.setAttribute("aria-valuetext", s.replace("{currentTime}", e).replace("{duration}", i));
                 } else if (re(t, this.config.selectors.inputs.volume)) {
-                    const e2 = 100 * t.value;
-                    t.setAttribute("aria-valuenow", e2), t.setAttribute("aria-valuetext", `${e2.toFixed(1)}%`);
+                    const e = 100 * t.value;
+                    t.setAttribute("aria-valuenow", e), t.setAttribute("aria-valuetext", `${e.toFixed(1)}%`);
                 } else t.setAttribute("aria-valuenow", t.value);
                 Y.isWebkit && t.style.setProperty("--value", t.value / t.max * 100 + "%");
             }
@@ -1578,8 +1621,8 @@ var global = arguments[3];
                     return 1 === t ? He.get("normal", this.config) : `${t}&times;`;
                 case "quality":
                     if ($(t)) {
-                        const e1 = He.get(`qualityLabel.${t}`, this.config);
-                        return e1.length ? e1 : `${t}p`;
+                        const e = He.get(`qualityLabel.${t}`, this.config);
+                        return e.length ? e : `${t}p`;
                     }
                     return Oe(t);
                 case "captions":
@@ -1664,7 +1707,7 @@ var global = arguments[3];
             if (O(e)) n = e;
             else if (F(e) && "Escape" === e.key) n = !1;
             else if (R(e)) {
-                const s1 = j(e.composedPath) ? e.composedPath()[0] : e.target, a = t.contains(s1);
+                const s = j(e.composedPath) ? e.composedPath()[0] : e.target, a = t.contains(s);
                 if (a || !a && e.target !== i && n) return;
             }
             i.setAttribute("aria-expanded", n), ae(t, !n), le(this.elements.container, this.config.classNames.menu.open, n), n && F(e) ? We.focusFirstMenuItem.call(this, null, !0) : n || s || ue.call(this, i, F(e));
@@ -1684,13 +1727,13 @@ var global = arguments[3];
             const s = i.parentNode, n = Array.from(s.children).find((e)=>!e.hidden);
             if (me.transitions && !me.reducedMotion) {
                 s.style.width = `${n.scrollWidth}px`, s.style.height = `${n.scrollHeight}px`;
-                const e1 = We.getMenuSize.call(this, i), t1 = (e)=>{
+                const e = We.getMenuSize.call(this, i), t = (e)=>{
                     e.target === s && [
                         "width",
                         "height"
-                    ].includes(e.propertyName) && (s.style.width = "", s.style.height = "", be.call(this, s, z, t1));
+                    ].includes(e.propertyName) && (s.style.width = "", s.style.height = "", be.call(this, s, z, t));
                 };
-                fe.call(this, s, z, t1), s.style.width = `${e1.width}px`, s.style.height = `${e1.height}px`;
+                fe.call(this, s, z, t), s.style.width = `${e.width}px`, s.style.height = `${e.height}px`;
             }
             ae(n, !0), ae(i, !1), We.focusFirstMenuItem.call(this, i, t);
         },
@@ -1708,54 +1751,54 @@ var global = arguments[3];
             };
             return Ce(D(this.config.controls) ? this.config.controls : []).forEach((l)=>{
                 if ("restart" === l && c.appendChild(i.call(this, "restart", h)), "rewind" === l && c.appendChild(i.call(this, "rewind", h)), "play" === l && c.appendChild(i.call(this, "play", h)), "fast-forward" === l && c.appendChild(i.call(this, "fast-forward", h)), "progress" === l) {
-                    const t1 = Z("div", {
+                    const t = Z("div", {
                         class: `${h.class} plyr__progress__container`
-                    }), i1 = Z("div", ne(this.config.selectors.progress));
-                    if (i1.appendChild(n.call(this, "seek", {
+                    }), i = Z("div", ne(this.config.selectors.progress));
+                    if (i.appendChild(n.call(this, "seek", {
                         id: `plyr-seek-${e.id}`
-                    })), i1.appendChild(s.call(this, "buffer")), this.config.tooltips.seek) {
-                        const e1 = Z("span", {
+                    })), i.appendChild(s.call(this, "buffer")), this.config.tooltips.seek) {
+                        const e = Z("span", {
                             class: this.config.classNames.tooltip
                         }, "00:00");
-                        i1.appendChild(e1), this.elements.display.seekTooltip = e1;
+                        i.appendChild(e), this.elements.display.seekTooltip = e;
                     }
-                    this.elements.progress = i1, t1.appendChild(this.elements.progress), c.appendChild(t1);
+                    this.elements.progress = i, t.appendChild(this.elements.progress), c.appendChild(t);
                 }
                 if ("current-time" === l && c.appendChild(a.call(this, "currentTime", h)), "duration" === l && c.appendChild(a.call(this, "duration", h)), "mute" === l || "volume" === l) {
-                    let { volume: t2  } = this.elements;
-                    if (H(t2) && c.contains(t2) || (t2 = Z("div", X({}, h, {
+                    let { volume: t  } = this.elements;
+                    if (H(t) && c.contains(t) || (t = Z("div", X({}, h, {
                         class: `${h.class} plyr__volume`.trim()
-                    })), this.elements.volume = t2, c.appendChild(t2)), "mute" === l && t2.appendChild(i.call(this, "mute")), "volume" === l && !Y.isIos) {
-                        const i2 = {
+                    })), this.elements.volume = t, c.appendChild(t)), "mute" === l && t.appendChild(i.call(this, "mute")), "volume" === l && !Y.isIos) {
+                        const i = {
                             max: 1,
                             step: .05,
                             value: this.config.volume
                         };
-                        t2.appendChild(n.call(this, "volume", X(i2, {
+                        t.appendChild(n.call(this, "volume", X(i, {
                             id: `plyr-volume-${e.id}`
                         })));
                     }
                 }
                 if ("captions" === l && c.appendChild(i.call(this, "captions", h)), "settings" === l && !W(this.config.settings)) {
-                    const s1 = Z("div", X({}, h, {
+                    const s = Z("div", X({}, h, {
                         class: `${h.class} plyr__menu`.trim(),
                         hidden: ""
                     }));
-                    s1.appendChild(i.call(this, "settings", {
+                    s.appendChild(i.call(this, "settings", {
                         "aria-haspopup": !0,
                         "aria-controls": `plyr-settings-${e.id}`,
                         "aria-expanded": !1
                     }));
-                    const n1 = Z("div", {
+                    const n = Z("div", {
                         class: "plyr__menu__container",
                         id: `plyr-settings-${e.id}`,
                         hidden: ""
-                    }), a1 = Z("div"), l1 = Z("div", {
+                    }), a = Z("div"), l = Z("div", {
                         id: `plyr-settings-${e.id}-home`
                     }), o = Z("div", {
                         role: "menu"
                     });
-                    l1.appendChild(o), a1.appendChild(l1), this.elements.settings.panels.home = l1, this.config.settings.forEach((i)=>{
+                    l.appendChild(o), a.appendChild(l), this.elements.settings.panels.home = l, this.config.settings.forEach((i)=>{
                         const s = Z("button", X(ne(this.config.selectors.buttons.settings), {
                             type: "button",
                             class: `${this.config.classNames.control} ${this.config.classNames.control}--forward`,
@@ -1787,21 +1830,21 @@ var global = arguments[3];
                             r.call(this, "home", !1);
                         }), c.appendChild(h), c.appendChild(Z("div", {
                             role: "menu"
-                        })), a1.appendChild(c), this.elements.settings.buttons[i] = s, this.elements.settings.panels[i] = c;
-                    }), n1.appendChild(a1), s1.appendChild(n1), c.appendChild(s1), this.elements.settings.popup = n1, this.elements.settings.menu = s1;
+                        })), a.appendChild(c), this.elements.settings.buttons[i] = s, this.elements.settings.panels[i] = c;
+                    }), n.appendChild(a), s.appendChild(n), c.appendChild(s), this.elements.settings.popup = n, this.elements.settings.menu = s;
                 }
                 if ("pip" === l && me.pip && c.appendChild(i.call(this, "pip", h)), "airplay" === l && me.airplay && c.appendChild(i.call(this, "airplay", h)), "download" === l) {
-                    const e2 = X({}, h, {
+                    const e = X({}, h, {
                         element: "a",
                         href: this.download,
                         target: "_blank"
                     });
-                    this.isHTML5 && (e2.download = "");
-                    const { download: t3  } = this.config.urls;
-                    !U(t3) && this.isEmbed && X(e2, {
+                    this.isHTML5 && (e.download = "");
+                    const { download: t  } = this.config.urls;
+                    !U(t) && this.isEmbed && X(e, {
                         icon: `logo-${this.provider}`,
                         label: this.provider
-                    }), c.appendChild(i.call(this, "download", e2));
+                    }), c.appendChild(i.call(this, "download", e));
                 }
                 "fullscreen" === l && c.appendChild(i.call(this, "fullscreen", h));
             }), this.isHTML5 && l.call(this, Le.getQualityOptions.call(this)), o.call(this), c;
@@ -1812,7 +1855,7 @@ var global = arguments[3];
                 e.cors && Ve(e.url, "sprite-plyr");
             }
             this.id = Math.floor(1e4 * Math.random());
-            let e1 = null;
+            let e = null;
             this.elements.controls = null;
             const t = {
                 id: this.id,
@@ -1820,7 +1863,7 @@ var global = arguments[3];
                 title: this.config.title
             };
             let i = !0;
-            j(this.config.controls) && (this.config.controls = this.config.controls.call(this, t)), this.config.controls || (this.config.controls = []), H(this.config.controls) || _(this.config.controls) ? e1 = this.config.controls : (e1 = We.create.call(this, {
+            j(this.config.controls) && (this.config.controls = this.config.controls.call(this, t)), this.config.controls || (this.config.controls = []), H(this.config.controls) || _(this.config.controls) ? e = this.config.controls : (e = We.create.call(this, {
                 id: this.id,
                 seektime: this.config.seekTime,
                 speed: this.speed,
@@ -1828,14 +1871,14 @@ var global = arguments[3];
                 captions: Ye.getLabel.call(this)
             }), i = !1);
             let s;
-            i && _(this.config.controls) && (e1 = ((e)=>{
+            i && _(this.config.controls) && (e = ((e)=>{
                 let i = e;
                 return Object.entries(t).forEach(([e, t])=>{
                     i = _e(i, `{${e}}`, t);
                 }), i;
-            })(e1)), _(this.config.selectors.controls.container) && (s = document.querySelector(this.config.selectors.controls.container)), H(s) || (s = this.elements.container);
-            if (s[H(e1) ? "insertAdjacentElement" : "insertAdjacentHTML"]("afterbegin", e1), H(this.elements.controls) || We.findElements.call(this), !W(this.elements.buttons)) {
-                const e2 = (e)=>{
+            })(e)), _(this.config.selectors.controls.container) && (s = document.querySelector(this.config.selectors.controls.container)), H(s) || (s = this.elements.container);
+            if (s[H(e) ? "insertAdjacentElement" : "insertAdjacentHTML"]("afterbegin", e), H(this.elements.controls) || We.findElements.call(this), !W(this.elements.buttons)) {
+                const e = (e)=>{
                     const t = this.config.classNames.controlPressed;
                     e.setAttribute("aria-pressed", "false"), Object.defineProperty(e, "pressed", {
                         configurable: !0,
@@ -1847,12 +1890,12 @@ var global = arguments[3];
                     });
                 };
                 Object.values(this.elements.buttons).filter(Boolean).forEach((t)=>{
-                    D(t) || q(t) ? Array.from(t).filter(Boolean).forEach(e2) : e2(t);
+                    D(t) || q(t) ? Array.from(t).filter(Boolean).forEach(e) : e(t);
                 });
             }
             if (Y.isEdge && K(s), this.config.tooltips.controls) {
-                const { classNames: e3 , selectors: t1  } = this.config, i1 = `${t1.controls.wrapper} ${t1.labels} .${e3.hidden}`, s1 = ce.call(this, i1);
-                Array.from(s1).forEach((e)=>{
+                const { classNames: e , selectors: t  } = this.config, i = `${t.controls.wrapper} ${t.labels} .${e.hidden}`, s = ce.call(this, i);
+                Array.from(s).forEach((e)=>{
                     le(e, this.config.classNames.hidden, !1), le(e, this.config.classNames.tooltip, !0);
                 });
             }
@@ -1897,12 +1940,12 @@ var global = arguments[3];
     function ze(e, t = !0) {
         let i = e;
         if (t) {
-            const e1 = document.createElement("a");
-            e1.href = i, i = e1.href;
+            const e = document.createElement("a");
+            e.href = i, i = e.href;
         }
         try {
             return new URL(i);
-        } catch (e2) {
+        } catch (e) {
             return null;
         }
     }
@@ -1918,8 +1961,8 @@ var global = arguments[3];
             if (!this.isVideo || this.isYouTube || this.isHTML5 && !me.textTracks) return void (D(this.config.controls) && this.config.controls.includes("settings") && this.config.settings.includes("captions") && We.setCaptionsMenu.call(this));
             var e, t;
             if (H(this.elements.captions) || (this.elements.captions = Z("div", ne(this.config.selectors.captions)), this.elements.captions.setAttribute("dir", "auto"), e = this.elements.captions, t = this.elements.wrapper, H(e) && H(t) && t.parentNode.insertBefore(e, t.nextSibling)), Y.isIE && window.URL) {
-                const e1 = this.media.querySelectorAll("track");
-                Array.from(e1).forEach((e)=>{
+                const e = this.media.querySelectorAll("track");
+                Array.from(e).forEach((e)=>{
                     const t = e.getAttribute("src"), i = ze(t);
                     null !== i && i.hostname !== window.location.href.hostname && [
                         "http:",
@@ -1943,8 +1986,8 @@ var global = arguments[3];
                 language: s,
                 languages: i
             }), this.isHTML5) {
-                const e2 = this.config.captions.update ? "addtrack removetrack" : "removetrack";
-                fe.call(this, this.media.textTracks, e2, Ye.update.bind(this));
+                const e = this.config.captions.update ? "addtrack removetrack" : "removetrack";
+                fe.call(this, this.media.textTracks, e, Ye.update.bind(this));
             }
             setTimeout(Ye.update.bind(this), 0);
         },
@@ -1963,11 +2006,11 @@ var global = arguments[3];
                 if (t || (this.captions.active = n, this.storage.set({
                     captions: n
                 })), !this.language && n && !t) {
-                    const e1 = Ye.getTracks.call(this), t1 = Ye.findTrack.call(this, [
+                    const e = Ye.getTracks.call(this), t = Ye.findTrack.call(this, [
                         this.captions.language,
                         ...this.captions.languages
                     ], !0);
-                    return this.captions.language = t1.language, void Ye.set.call(this, e1.indexOf(t1));
+                    return this.captions.language = t.language, void Ye.set.call(this, e.indexOf(t));
                 }
                 this.elements.buttons.captions && (this.elements.buttons.captions.pressed = n), le(this.elements.container, s, n), this.captions.toggled = n, We.updateSetting.call(this, "captions"), ve.call(this, this.media, n ? "captionsenabled" : "captionsdisabled");
             }
@@ -2025,14 +2068,14 @@ var global = arguments[3];
             if (!I(e) && !Array.isArray(e)) return void this.debug.warn("updateCues: Invalid input", e);
             let t = e;
             if (!t) {
-                const e1 = Ye.getCurrentTrack.call(this);
-                t = Array.from((e1 || {}).activeCues || []).map((e)=>e.getCueAsHTML()).map(De);
+                const e = Ye.getCurrentTrack.call(this);
+                t = Array.from((e || {}).activeCues || []).map((e)=>e.getCueAsHTML()).map(De);
             }
             const i = t.map((e)=>e.trim()).join("\n");
             if (i !== this.elements.captions.innerHTML) {
                 ie(this.elements.captions);
-                const e2 = Z("span", ne(this.config.selectors.caption));
-                e2.innerHTML = i, this.elements.captions.appendChild(e2), ve.call(this, this.media, "cuechange");
+                const e = Z("span", ne(this.config.selectors.caption));
+                e.innerHTML = i, this.elements.captions.appendChild(e), ve.call(this, this.media, "cuechange");
             }
         }
     }, Qe = {
@@ -2544,10 +2587,10 @@ var global = arguments[3];
             if (_(this.config.title) && !W(this.config.title) && (e += `, ${this.config.title}`), Array.from(this.elements.buttons.play || []).forEach((t)=>{
                 t.setAttribute("aria-label", e);
             }), this.isEmbed) {
-                const e1 = he.call(this, "iframe");
-                if (!H(e1)) return;
+                const e = he.call(this, "iframe");
+                if (!H(e)) return;
                 const t = W(this.config.title) ? "video" : this.config.title, i = He.get("frameTitle", this.config);
-                e1.setAttribute("title", i.replace("{title}", t));
+                e.setAttribute("title", i.replace("{title}", t));
             }
         },
         togglePoster (e) {
@@ -2678,11 +2721,11 @@ var global = arguments[3];
                 }), fe.call(e, e.media, "ready qualitychange", ()=>{
                     We.setDownloadUrl.call(e);
                 });
-                const i1 = e.config.events.concat([
+                const i = e.config.events.concat([
                     "keyup",
                     "keydown"
                 ]).join(" ");
-                fe.call(e, e.media, i1, (i)=>{
+                fe.call(e, e.media, i, (i)=>{
                     let { detail: s = {}  } = i;
                     "error" === i.type && (s = e.media.error), ve.call(e, t.container, i.type, !0, s);
                 });
@@ -2737,8 +2780,8 @@ var global = arguments[3];
                     ].includes(t.type);
                     n && a ? (i.removeAttribute(s), ke(e.play())) : !a && e.playing && (i.setAttribute(s, ""), e.pause());
                 }), Y.isIos) {
-                    const t1 = ce.call(e, 'input[type="range"]');
-                    Array.from(t1).forEach((e)=>this.bind(e, i, (e)=>K(e.target)));
+                    const t = ce.call(e, 'input[type="range"]');
+                    Array.from(t).forEach((e)=>this.bind(e, i, (e)=>K(e.target)));
                 }
                 this.bind(t.inputs.seek, i, (t)=>{
                     const i = t.currentTarget;
@@ -2796,11 +2839,11 @@ var global = arguments[3];
             if (a || l || o || r) return;
             if (!s) return;
             if (c) {
-                const n1 = document.activeElement;
-                if (H(n1)) {
-                    const { editable: s1  } = t.config.selectors, { seek: a1  } = i.inputs;
-                    if (n1 !== a1 && re(n1, s1)) return;
-                    if ("Space" === e.key && re(n1, 'button, [role^="menuitem"]')) return;
+                const n = document.activeElement;
+                if (H(n)) {
+                    const { editable: s  } = t.config.selectors, { seek: a  } = i.inputs;
+                    if (n !== a && re(n, s)) return;
+                    if ("Space" === e.key && re(n, 'button, [role^="menuitem"]')) return;
                 }
                 switch([
                     "Space",
@@ -2906,8 +2949,8 @@ var global = arguments[3];
                     var r = e.type[0];
                     if (a) try {
                         l.sheet.cssText.length || (r = "e");
-                    } catch (e1) {
-                        18 != e1.code && (r = "e");
+                    } catch (e) {
+                        18 != e.code && (r = "e");
                     }
                     if ("e" == r) {
                         if ((n += 1) < h) return o(t, i, s, n);
@@ -3011,11 +3054,11 @@ var global = arguments[3];
                 "gyroscope"
             ].join("; ")), W(s) || u.setAttribute("referrerPolicy", s), i || !t.customControls) u.setAttribute("data-poster", e.poster), e.media = se(u, e.media);
             else {
-                const t1 = Z("div", {
+                const t = Z("div", {
                     class: e.config.classNames.embedContainer,
                     "data-poster": e.poster
                 });
-                t1.appendChild(u), e.media = se(t1, e.media);
+                t.appendChild(u), e.media = se(t, e.media);
             }
             t.customControls || Fe($e(e.config.urls.vimeo.api, d)).then((t)=>{
                 !W(t) && t.thumbnail_url && at.setPoster.call(e, t.thumbnail_url).catch(()=>{});
@@ -3172,8 +3215,8 @@ var global = arguments[3];
                 "data-poster": t.customControls ? e.poster : void 0
             });
             if (e.media = se(l, e.media), t.customControls) {
-                const t1 = (e)=>`https://i.ytimg.com/vi/${n}/${e}default.jpg`;
-                nt(t1("maxres"), 121).catch(()=>nt(t1("sd"), 121)).catch(()=>nt(t1("hq"))).then((t)=>at.setPoster.call(e, t.src)).then((t)=>{
+                const t = (e)=>`https://i.ytimg.com/vi/${n}/${e}default.jpg`;
+                nt(t("maxres"), 121).catch(()=>nt(t("sd"), 121)).catch(()=>nt(t("hq"))).then((t)=>at.setPoster.call(e, t.src)).then((t)=>{
                     t.includes("maxres") || (e.elements.poster.style.backgroundSize = "cover");
                 }).catch(()=>{});
             }
@@ -3316,8 +3359,8 @@ var global = arguments[3];
                 try {
                     const t = new google.ima.AdsRequest;
                     t.adTagUrl = this.tagUrl, t.linearAdSlotWidth = e.offsetWidth, t.linearAdSlotHeight = e.offsetHeight, t.nonLinearAdSlotWidth = e.offsetWidth, t.nonLinearAdSlotHeight = e.offsetHeight, t.forceNonLinearFullSlot = !1, t.setAdWillPlayMuted(!this.player.muted), this.loader.requestAds(t);
-                } catch (e1) {
-                    this.onAdError(e1);
+                } catch (e) {
+                    this.onAdError(e);
                 }
             }), e(this, "pollCountdown", (e = !1)=>{
                 if (!e) return clearInterval(this.countdownTimer), void this.elements.container.removeAttribute("data-badge-text");
@@ -3391,8 +3434,8 @@ var global = arguments[3];
                     this.manager.setVolume(this.player.volume), this.elements.displayContainer.initialize();
                     try {
                         this.initialized || (this.manager.init(e.offsetWidth, e.offsetHeight, google.ima.ViewMode.NORMAL), this.manager.start()), this.initialized = !0;
-                    } catch (e1) {
-                        this.onAdError(e1);
+                    } catch (e) {
+                        this.onAdError(e);
                     }
                 }).catch(()=>{});
             }), e(this, "resumeContent", ()=>{
@@ -3457,8 +3500,8 @@ var global = arguments[3];
                         [i.text] = t, t[1] && ([i.x, i.y, i.w, i.h] = t[1].split(","));
                     }
                 } else {
-                    const t1 = e.match(/([0-9]{2})?:?([0-9]{2}):([0-9]{2}).([0-9]{2,3})( ?--> ?)([0-9]{2})?:?([0-9]{2}):([0-9]{2}).([0-9]{2,3})/);
-                    t1 && (i.startTime = 60 * Number(t1[1] || 0) * 60 + 60 * Number(t1[2]) + Number(t1[3]) + Number(`0.${t1[4]}`), i.endTime = 60 * Number(t1[6] || 0) * 60 + 60 * Number(t1[7]) + Number(t1[8]) + Number(`0.${t1[9]}`));
+                    const t = e.match(/([0-9]{2})?:?([0-9]{2}):([0-9]{2}).([0-9]{2,3})( ?--> ?)([0-9]{2})?:?([0-9]{2}):([0-9]{2}).([0-9]{2,3})/);
+                    t && (i.startTime = 60 * Number(t[1] || 0) * 60 + 60 * Number(t[2]) + Number(t[3]) + Number(`0.${t[4]}`), i.endTime = 60 * Number(t[6] || 0) * 60 + 60 * Number(t[7]) + Number(t[8]) + Number(`0.${t[9]}`));
                 }
             }), i.text && t.push(i);
         }), t;
@@ -3482,10 +3525,10 @@ var global = arguments[3];
                         this.thumbnails = e, i();
                     });
                     else {
-                        const e1 = (_(t) ? [
+                        const e = (_(t) ? [
                             t
                         ] : t).map((e)=>this.getThumbnail(e));
-                        Promise.all(e1).then(i);
+                        Promise.all(e).then(i);
                     }
                 })), e(this, "getThumbnail", (e)=>new Promise((t)=>{
                     Fe(e).then((i)=>{
@@ -3557,8 +3600,8 @@ var global = arguments[3];
                 if (this.currentImageElement && this.currentImageElement.dataset.filename === a) this.showImage(this.currentImageElement, n, e, t, a, !1), this.currentImageElement.dataset.index = t, this.removeOldImages(this.currentImageElement);
                 else {
                     this.loadingImage && this.usingSprites && (this.loadingImage.onload = null);
-                    const i1 = new Image;
-                    i1.src = l, i1.dataset.index = t, i1.dataset.filename = a, this.showingThumbFilename = a, this.player.debug.log(`Loading image: ${l}`), i1.onload = ()=>this.showImage(i1, n, e, t, a, !0), this.loadingImage = i1, this.removeOldImages(i1);
+                    const i = new Image;
+                    i.src = l, i.dataset.index = t, i.dataset.filename = a, this.showingThumbFilename = a, this.player.debug.log(`Loading image: ${l}`), i.onload = ()=>this.showImage(i, n, e, t, a, !0), this.loadingImage = i, this.removeOldImages(i);
                 }
             }), e(this, "showImage", (e, t, i, s, n, a = !0)=>{
                 this.player.debug.log(`Showing thumb: ${n}. num: ${s}. qual: ${i}. newimg: ${a}`), this.setImageSizeAndOffset(e, t), a && (this.currentImageContainer.appendChild(e), this.currentImageElement = e, this.loadedImages.includes(n) || this.loadedImages.push(n)), this.preloadNearby(s, !0).then(this.preloadNearby(s, !1)).then(this.getHigherQuality(i, e, t, n));
@@ -3568,9 +3611,9 @@ var global = arguments[3];
                     const i = this.usingSprites ? 500 : 1e3;
                     if (t.dataset.index !== e.dataset.index && !t.dataset.deleting) {
                         t.dataset.deleting = !0;
-                        const { currentImageContainer: e1  } = this;
+                        const { currentImageContainer: e  } = this;
                         setTimeout(()=>{
-                            e1.removeChild(t), this.player.debug.log(`Removing thumb: ${t.dataset.filename}`);
+                            e.removeChild(t), this.player.debug.log(`Removing thumb: ${t.dataset.filename}`);
                         }, i);
                     }
                 });
@@ -3585,8 +3628,8 @@ var global = arguments[3];
                                 const t = e.text;
                                 if (t !== s && !this.loadedImages.includes(t)) {
                                     a = !0, this.player.debug.log(`Preloading thumb filename: ${t}`);
-                                    const { urlPrefix: e1  } = this.thumbnails[0], s1 = e1 + t, n = new Image;
-                                    n.src = s1, n.onload = ()=>{
+                                    const { urlPrefix: e  } = this.thumbnails[0], s = e + t, n = new Image;
+                                    n.src = s, n.onload = ()=>{
                                         this.player.debug.log(`Preloaded thumb filename: ${t}`), this.loadedImages.includes(t) || this.loadedImages.push(t), i();
                                     };
                                 }
@@ -3615,12 +3658,12 @@ var global = arguments[3];
                         const t = Math.floor(e.clientHeight * this.thumbAspectRatio);
                         e.style.width = `${t}px`;
                     } else if (e.clientHeight < 20 && e.clientWidth > 20) {
-                        const t1 = Math.floor(e.clientWidth / this.thumbAspectRatio);
-                        e.style.height = `${t1}px`;
+                        const t = Math.floor(e.clientWidth / this.thumbAspectRatio);
+                        e.style.height = `${t}px`;
                     }
                 } else {
-                    const t2 = Math.floor(this.thumbContainerHeight * this.thumbAspectRatio);
-                    e.style.height = `${this.thumbContainerHeight}px`, e.style.width = `${t2}px`;
+                    const t = Math.floor(this.thumbContainerHeight * this.thumbAspectRatio);
+                    e.style.height = `${this.thumbContainerHeight}px`, e.style.width = `${t}px`;
                 }
                 this.setThumbContainerPos();
             }), e(this, "setThumbContainerPos", ()=>{
@@ -3714,8 +3757,8 @@ var global = arguments[3];
                 if (this.supported.ui && !this.isAudio) {
                     const t = oe(this.elements.container, this.config.classNames.hideControls), i = void 0 === e ? void 0 : !e, s = le(this.elements.container, this.config.classNames.hideControls, i);
                     if (s && D(this.config.controls) && this.config.controls.includes("settings") && !W(this.config.settings) && We.toggleMenu.call(this, !1), s !== t) {
-                        const e1 = s ? "controlshidden" : "controlsshown";
-                        ve.call(this, this.media, e1);
+                        const e = s ? "controlshidden" : "controlsshown";
+                        ve.call(this, this.media, e);
                     }
                     return !s;
                 }
@@ -3777,11 +3820,11 @@ var global = arguments[3];
                         if (l = ze(a.getAttribute("src")), this.provider = function(e) {
                             return /^(https?:\/\/)?(www\.)?(youtube\.com|youtube-nocookie\.com|youtu\.?be)\/.+$/.test(e) ? Ge.youtube : /^https?:\/\/player.vimeo.com\/video\/\d{0,9}(?=\b|\/)/.test(e) ? Ge.vimeo : null;
                         }(l.toString()), this.elements.container = this.media, this.media = a, this.elements.container.className = "", l.search.length) {
-                            const e1 = [
+                            const e = [
                                 "1",
                                 "true"
                             ];
-                            e1.includes(l.searchParams.get("autoplay")) && (this.config.autoplay = !0), e1.includes(l.searchParams.get("loop")) && (this.config.loop.active = !0), this.isYouTube ? (this.config.playsinline = e1.includes(l.searchParams.get("playsinline")), this.config.youtube.hl = l.searchParams.get("hl")) : this.config.playsinline = !0;
+                            e.includes(l.searchParams.get("autoplay")) && (this.config.autoplay = !0), e.includes(l.searchParams.get("loop")) && (this.config.loop.active = !0), this.isYouTube ? (this.config.playsinline = e.includes(l.searchParams.get("playsinline")), this.config.youtube.hl = l.searchParams.get("hl")) : this.config.playsinline = !0;
                         }
                     } else this.provider = this.media.getAttribute(this.config.attributes.embed.provider), this.media.removeAttribute(this.config.attributes.embed.provider);
                     if (W(this.provider) || !Object.values(Ge).includes(this.provider)) return void this.debug.error("Setup failed: Invalid provider");
@@ -3893,8 +3936,8 @@ var global = arguments[3];
                 t.default
             ].find($), n = !0;
             if (!i.includes(s)) {
-                const e1 = Ae(i, s);
-                this.debug.warn(`Unsupported quality option: ${s}, using ${e1} instead`), s = e1, n = !1;
+                const e = Ae(i, s);
+                this.debug.warn(`Unsupported quality option: ${s}, using ${e} instead`), s = e, n = !1;
             }
             t.selected = s, this.media.quality = s, n && this.storage.set({
                 quality: s
@@ -4041,13 +4084,12 @@ class Timescale {
     get template() {
         return `
       <div class="timescale-wrapper">
-        <div class="timescale-scale" style="width: ${this.width}%">
+        <div class="timescale-scale" style="width: 100%">
           <div data-element="cells"></div>
           <div data-element="ticks"></div>
           <div data-element="times"></div>
           <div data-element="cursor"></div>
         </div>
-        <div data-element="reset"></div>
       </div>
     `;
     }
@@ -4076,13 +4118,11 @@ class Timescale {
         let cursor = new (0, _Default3.default)({
             x: cells.borderLeft
         });
-        let reset = new (0, _Default4.default)();
         this._components = {
             cells,
             ticks,
             times,
-            cursor,
-            reset
+            cursor
         };
     }
     _initEventListeners() {
@@ -4120,35 +4160,37 @@ class Timescale {
         this.$scale.style.transform = `translateX(${(0, _1.round)(tranlateTo)}%)`;
         this._components.ticks.zoom(level);
         this._components.times.zoom(level);
-        this._components.reset.show();
     }
     zoomReset() {
-        this.$scale.style.width = `${this.width}%`;
+        this.$scale.style.width = `100%`;
         this.$scale.style.transform = `translateX(0)`;
         this._components.cells.zoomReset();
         this._components.ticks.zoomReset();
         this._components.times.zoomReset();
-        this._components.reset.hide();
     }
-    setCursor(to) {
-        this._components.cursor.set(to);
+    setCursor(to, opacity = 1) {
+        this._components.cursor.set(to, opacity);
     }
     moveCursor(time) {
         let to = (0, _1.round)(time / (this.hours * 3600) * 100, 4);
         this._components.cursor.move(to);
         this._components.cells.setBack(to);
     }
+    switchToCell(id) {
+        let newPos = this._components.cells.set(id);
+        this.setCursor(newPos, 0);
+    }
     update(data) {
         this.value = data;
         let newData = {
             ...this.value
         };
-        this.$scale.style.width = `${this.width}%`;
+        this.$scale.style.width = `100%`;
         this._components.cells.update(newData);
         this._components.ticks.update(newData);
         this._components.times.update(newData);
         let to = this._components.cells.borderLeft;
-        this._components.cursor.set(to, 0);
+        this.setCursor(to, 0);
     }
     destroy() {
         this.value = null;
@@ -4178,7 +4220,6 @@ var _indexJs = require("./index.js");
 var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
 // Decorator pattern
 const connectToObserver = (Component)=>class extends Component {
-        static name = `connected to observer ${Component.name}`;
         constructor(...props){
             props.push((0, _indexJsDefault.default).instance);
             super(...props);
@@ -4439,6 +4480,7 @@ class Cells {
         this.onDoubleClick = this.onDoubleClick.bind(this);
     }
     _initEventListeners() {
+        var cells = this.$element.getElementsByClassName("timescale-cell");
         this.$element.addEventListener("click", this.onClick);
         this.$element.addEventListener("dblclick", this.onDoubleClick);
     }
@@ -4486,7 +4528,12 @@ class Cells {
     }
     /*
     Public
-  */ update(data) {
+  */ set(id) {
+        let target = this.$element.querySelector(`[data-id="${id}"]`);
+        this._initBack(target);
+        return Number(target.style.left.slice(0, -1));
+    }
+    update(data) {
         this.value = data;
         this.$element.innerHTML = this.cells;
         this._initBack();
@@ -4713,8 +4760,8 @@ class Times {
             let seconds = rest * this._step * 3600;
             return (0, _.secToTime)(seconds, true);
         }
-        let seconds1 = index * this._step * 3600;
-        return (0, _.secToTime)(seconds1, true);
+        let seconds = index * this._step * 3600;
+        return (0, _.secToTime)(seconds, true);
     }
     get count() {
         return this.hours / this._step;
@@ -4814,13 +4861,14 @@ class Cursor {
         return `<div class="timescale-cursor"></div>`;
     }
     set(to, opacity = 1) {
-        this._x = to;
+        this._x = Number(to);
         this.$element.style.opacity = opacity;
         this.$element.style.left = `${this._x}%`;
     }
     move(to) {
+        let newPos = this._x + to;
         this.$element.style.opacity = 1;
-        this.$element.style.left = `${this._x + to}%`;
+        this.$element.style.left = `${newPos}%`;
     }
     destroy() {
         this._x = null;
@@ -4971,6 +5019,6 @@ const data2 = {
     ]
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["awEvQ","bB7Pu"], "bB7Pu", "parcelRequire94c2")
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["8BXtR","bB7Pu"], "bB7Pu", "parcelRequire719c")
 
 //# sourceMappingURL=index.3d214d75.js.map

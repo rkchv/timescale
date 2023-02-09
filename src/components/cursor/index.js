@@ -28,14 +28,15 @@ class Cursor {
   }
 
   set(to, opacity = 1) {
-    this._x = to;
+    this._x = Number(to);
     this.$element.style.opacity = opacity;
     this.$element.style.left = `${this._x}%`;
   }
 
   move(to) {
+    let newPos = this._x + to
     this.$element.style.opacity = 1;
-    this.$element.style.left = `${this._x + to}%`;
+    this.$element.style.left = `${newPos}%`;
   }
 
   destroy() {

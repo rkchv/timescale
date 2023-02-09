@@ -1399,7 +1399,7 @@ body {
 .timescale-ticks {
   width: 100%;
   height: 100%;
-  background-color: #ececec;
+  background-color: #f8f8f8;
 }
 
 .timescale-tick {
@@ -1416,7 +1416,8 @@ body {
 
 .timescale-tick.big {
   height: 100%;
-  background-color: red;
+  width: 2px;
+  background-color: #e8e8e8;
 }
 
 .timescale-tick.big.shift, .timescale-tick:last-child {
@@ -1443,7 +1444,7 @@ body {
 }
 
 .timescale-time {
-  color: gray;
+  color: #6d6e70;
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
